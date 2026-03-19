@@ -1,0 +1,39 @@
+{
+  "name": "@anthropic-ai/gsc-mcp",
+  "version": "1.0.0",
+  "description": "Google Search Console MCP server for Claude — answers real SEO questions, not raw API rows",
+  "main": "dist/index.js",
+  "bin": {
+    "gsc-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "mcp",
+    "google-search-console",
+    "seo",
+    "claude",
+    "gsc"
+  ],
+  "author": "Suganthan Mohanadasan",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "googleapis": "^144.0.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}
