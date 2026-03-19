@@ -121,27 +121,6 @@ Then point your MCP config to the local build:
 }
 ```
 
-## Project structure
-
-```
-src/
-  index.ts          # MCP server setup and tool registration
-  auth.ts           # Google API authentication
-  analytics.ts      # Search Analytics API queries
-  inspection.ts     # URL Inspection API queries
-  tools/
-    quick-wins.ts
-    ctr-opportunities.ts
-    traffic-drops.ts
-    content-gaps.ts
-    site-snapshot.ts
-    inspect-url.ts
-    cannibalization-check.ts
-    content-decay.ts
-    topic-cluster-performance.ts
-    ctr-vs-benchmark.ts
-```
-
 ## Privacy and security
 
 - Runs entirely on your machine
