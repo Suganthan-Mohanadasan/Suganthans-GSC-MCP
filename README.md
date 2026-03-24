@@ -8,7 +8,7 @@ No subscriptions. No API costs. Your data stays on your machine.
 
 ## What it does
 
-10 built in SEO analyses that cover the things you actually check:
+11 built in tools that cover the things you actually check:
 
 | Tool | What it does |
 |---|---|
@@ -22,8 +22,23 @@ No subscriptions. No API costs. Your data stays on your machine.
 | `inspect_url` | Indexing status, crawl info, canonical issues, mobile usability |
 | `topic_cluster_performance` | Aggregate performance for all pages under a URL path |
 | `ctr_vs_benchmark` | Your actual CTR compared to industry averages by position |
+| `verify_claim` | Self-check: verifies a specific numeric claim against live GSC data |
 
 Because it runs through Claude, you can ask follow up questions, combine analyses, and get recommendations, not just raw data.
+
+## Hallucination guardrails
+
+MCP servers return real data from real APIs. But the AI model interpreting that data can still make mistakes: rounding numbers, inventing explanations, or filling gaps with assumptions from its training data.
+
+This server has three layers of protection against that, added after feedback from [Krinal Mehta](https://www.linkedin.com/in/krinal/):
+
+**1. Guardrail prompts.** Every tool description includes an explicit instruction telling the model to base its analysis only on the returned data, report exact numbers, and say "I don't know" rather than speculate about causes the data doesn't support.
+
+**2. Data provenance metadata.** Every response includes a `_meta` field confirming the data source (Google Search Console API), the tool that produced it, and the parameters used. This anchors the model to the actual numbers rather than its training data.
+
+**3. Verify claim tool.** A dedicated `verify_claim` tool that lets the model self-check before presenting findings. Pass a claim ("homepage gets 500 clicks"), the metric, and the expected value. The tool re-queries the API and returns whether the claim is verified, with any discrepancy noted.
+
+These don't eliminate the possibility of misinterpretation, but they significantly reduce it. The data itself is always exact (it comes directly from Google's API), and the model is explicitly told to treat it as such.
 
 ## Requirements
 
