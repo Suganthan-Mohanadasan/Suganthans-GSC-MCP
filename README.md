@@ -4,7 +4,7 @@ Ask Claude questions about your Google Search Console data and get real answers.
 
 "What are my quick wins?" "Which pages are cannibalising each other?" "What content is decaying?" "Check for any alerts." "Give me content recommendations." Just ask, and the server runs the analysis on your live GSC data.
 
-**v2.0:** OAuth support, alerting, scheduled reports, content recommendations, multi-site dashboards, advanced filtering.
+**v2.1:** Indexing API (submit URLs for crawling, batch submit, sitemap management). Plus OAuth, alerting, scheduled reports, content recommendations, multi-site dashboards, advanced filtering.
 
 Full walkthrough: [suganthan.com/blog/google-search-console-mcp-server/](https://suganthan.com/blog/google-search-console-mcp-server/)
 
@@ -59,6 +59,16 @@ First use opens a browser for Google sign in. Token is cached after that.
 }
 ```
 
+### Indexing API setup (for submit_url, submit_batch)
+
+To use the indexing tools, enable the **Indexing API** in your Google Cloud project:
+
+1. Go to [APIs & Services > Library](https://console.cloud.google.com/apis/library/indexing.googleapis.com)
+2. Search for "Web Search Indexing API" and enable it
+3. Your service account (or OAuth credentials) need owner-level access in Search Console
+
+Note: Google officially says the Indexing API is for JobPosting and BroadcastEvent schema types. In practice, it processes requests for all page types. Priority is not guaranteed for non-job pages.
+
 ### Multi-site setup
 
 For multiple properties, add `GSC_SITE_URLS`:
@@ -83,9 +93,12 @@ For multiple properties, add `GSC_SITE_URLS`:
 "Which pages are cannibalising each other?"
 "What content is decaying?"
 "Is /blog/my-post/ indexed?"
+"Submit this URL for indexing: https://mysite.com/new-post/"
+"Batch submit all my new blog posts for indexing"
+"List my sitemaps and their status"
 ```
 
-## Tools (16 total)
+## Tools (20 total)
 
 ### Analysis tools
 
@@ -111,6 +124,15 @@ For multiple properties, add `GSC_SITE_URLS`:
 | `content_recommendations` | What should I update, create, or consolidate, and in what order? |
 | `generate_report` | Save a full markdown report to disk (snapshot + alerts + wins + drops + decay + recommendations) |
 | `multi_site_dashboard` | Health check across all my properties in one view |
+
+### Indexing (new in v2.1)
+
+| Tool | What it does |
+|---|---|
+| `submit_url` | Submit a URL to Google's Indexing API for crawling/indexing |
+| `submit_batch` | Batch submit up to 200 URLs in one go (daily quota) |
+| `submit_sitemap` | Notify Google of a new or updated sitemap |
+| `list_sitemaps` | List all submitted sitemaps with status, errors, and indexed counts |
 
 ### Safety
 

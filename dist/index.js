@@ -21,9 +21,11 @@ const check_alerts_js_1 = require("./tools/check-alerts.js");
 const content_recommendations_js_1 = require("./tools/content-recommendations.js");
 const generate_report_js_1 = require("./tools/generate-report.js");
 const multi_site_dashboard_js_1 = require("./tools/multi-site-dashboard.js");
+const submit_url_js_1 = require("./tools/submit-url.js");
+const submit_sitemap_js_1 = require("./tools/submit-sitemap.js");
 const server = new mcp_js_1.McpServer({
     name: "gsc-mcp",
-    version: "2.0.0",
+    version: "2.1.0",
 });
 // 1. Quick Wins
 server.tool("quick_wins", "Find keywords you're almost ranking for that could be pushed to page one. Returns queries at positions 4-15 with high impressions, sorted by traffic opportunity." + guardrails_js_1.GUARDRAIL_SUFFIX, {
@@ -211,10 +213,47 @@ server.tool("multi_site_dashboard", "Health check across multiple GSC properties
         content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };
 });
+// 17. Submit URL for Indexing
+server.tool("submit_url", "Submit a URL to Google's Indexing API to request crawling and indexing. Works for notifying Google of new or updated content. Note: Google officially supports this for JobPosting/BroadcastEvent schema but processes all page types." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+    url: zod_1.z.string().describe("The full URL to submit for indexing"),
+    action: zod_1.z.enum(["URL_UPDATED", "URL_DELETED"]).default("URL_UPDATED").describe("URL_UPDATED for new/changed content, URL_DELETED for removed pages"),
+}, async ({ url, action }) => {
+    const results = await (0, submit_url_js_1.submitUrl)(url, action);
+    return {
+        content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+    };
+});
+// 18. Batch Submit URLs
+server.tool("submit_batch", "Submit up to 200 URLs to Google's Indexing API in one go. Daily quota is 200 URL notifications. Use for bulk indexing requests after publishing multiple pages or a site-wide update." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+    urls: zod_1.z.array(zod_1.z.string()).describe("Array of URLs to submit (max 200)"),
+    action: zod_1.z.enum(["URL_UPDATED", "URL_DELETED"]).default("URL_UPDATED").describe("URL_UPDATED for new/changed content, URL_DELETED for removed pages"),
+}, async ({ urls, action }) => {
+    const results = await (0, submit_url_js_1.submitBatch)(urls, action);
+    return {
+        content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+    };
+});
+// 19. Submit Sitemap
+server.tool("submit_sitemap", "Notify Google of a new or updated sitemap. Triggers Google to recrawl the sitemap and discover new pages." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+    sitemap_url: zod_1.z.string().optional().describe("Full sitemap URL (defaults to {site_url}/sitemap.xml)"),
+}, async ({ sitemap_url }) => {
+    const results = await (0, submit_sitemap_js_1.submitSitemap)(sitemap_url);
+    return {
+        content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+    };
+});
+// 20. List Sitemaps
+server.tool("list_sitemaps", "List all sitemaps submitted for the site, with status, errors, warnings, and indexed page counts." + guardrails_js_1.GUARDRAIL_SUFFIX, {}, async () => {
+    const results = await (0, submit_sitemap_js_1.listSitemaps)();
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "list_sitemaps", {});
+    return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+});
 async function main() {
     const transport = new stdio_js_1.StdioServerTransport();
     await server.connect(transport);
-    console.error("GSC MCP server v2.0.0 running on stdio");
+    console.error("GSC MCP server v2.1.0 running on stdio");
 }
 main().catch((error) => {
     console.error("Fatal error:", error);

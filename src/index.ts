@@ -21,10 +21,12 @@ import { checkAlerts } from "./tools/check-alerts.js";
 import { contentRecommendations } from "./tools/content-recommendations.js";
 import { generateReport } from "./tools/generate-report.js";
 import { multiSiteDashboard } from "./tools/multi-site-dashboard.js";
+import { submitUrl, submitBatch } from "./tools/submit-url.js";
+import { submitSitemap, listSitemaps } from "./tools/submit-sitemap.js";
 
 const server = new McpServer({
   name: "gsc-mcp",
-  version: "2.0.0",
+  version: "2.1.0",
 });
 
 // 1. Quick Wins
@@ -309,10 +311,71 @@ server.tool(
   }
 );
 
+// 17. Submit URL for Indexing
+server.tool(
+  "submit_url",
+  "Submit a URL to Google's Indexing API to request crawling and indexing. Works for notifying Google of new or updated content. Note: Google officially supports this for JobPosting/BroadcastEvent schema but processes all page types." + GUARDRAIL_SUFFIX,
+  {
+    url: z.string().describe("The full URL to submit for indexing"),
+    action: z.enum(["URL_UPDATED", "URL_DELETED"]).default("URL_UPDATED").describe("URL_UPDATED for new/changed content, URL_DELETED for removed pages"),
+  },
+  async ({ url, action }) => {
+    const results = await submitUrl(url, action);
+    return {
+      content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+    };
+  }
+);
+
+// 18. Batch Submit URLs
+server.tool(
+  "submit_batch",
+  "Submit up to 200 URLs to Google's Indexing API in one go. Daily quota is 200 URL notifications. Use for bulk indexing requests after publishing multiple pages or a site-wide update." + GUARDRAIL_SUFFIX,
+  {
+    urls: z.array(z.string()).describe("Array of URLs to submit (max 200)"),
+    action: z.enum(["URL_UPDATED", "URL_DELETED"]).default("URL_UPDATED").describe("URL_UPDATED for new/changed content, URL_DELETED for removed pages"),
+  },
+  async ({ urls, action }) => {
+    const results = await submitBatch(urls, action);
+    return {
+      content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+    };
+  }
+);
+
+// 19. Submit Sitemap
+server.tool(
+  "submit_sitemap",
+  "Notify Google of a new or updated sitemap. Triggers Google to recrawl the sitemap and discover new pages." + GUARDRAIL_SUFFIX,
+  {
+    sitemap_url: z.string().optional().describe("Full sitemap URL (defaults to {site_url}/sitemap.xml)"),
+  },
+  async ({ sitemap_url }) => {
+    const results = await submitSitemap(sitemap_url);
+    return {
+      content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+    };
+  }
+);
+
+// 20. List Sitemaps
+server.tool(
+  "list_sitemaps",
+  "List all sitemaps submitted for the site, with status, errors, warnings, and indexed page counts." + GUARDRAIL_SUFFIX,
+  {},
+  async () => {
+    const results = await listSitemaps();
+    const wrapped = withMeta(results, "list_sitemaps", {});
+    return {
+      content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+  }
+);
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("GSC MCP server v2.0.0 running on stdio");
+  console.error("GSC MCP server v2.1.0 running on stdio");
 }
 
 main().catch((error) => {
