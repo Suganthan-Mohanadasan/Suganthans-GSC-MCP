@@ -58,9 +58,9 @@ export function getPriorDateRange(days: number): { startDate: string; endDate: s
  * Fetches all rows from the Search Analytics API with automatic pagination.
  * Uses dataState: 'all' so data matches the GSC dashboard exactly.
  */
-export async function fetchAllRows(params: QueryParams): Promise<SearchAnalyticsRow[]> {
+export async function fetchAllRows(params: QueryParams, siteUrlOverride?: string): Promise<SearchAnalyticsRow[]> {
   const client = await getSearchConsoleClient();
-  const { siteUrl } = getConfig();
+  const siteUrl = siteUrlOverride || getConfig().siteUrl;
   const allRows: SearchAnalyticsRow[] = [];
   const pageSize = params.rowLimit || 25000;
   let startRow = 0;

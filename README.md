@@ -1,66 +1,23 @@
-# Google Search Console MCP Server
+# GSC MCP Server
 
-An MCP server that connects Claude to your Google Search Console data. Ask questions about your traffic, rankings, and content performance in plain English.
+Ask Claude questions about your Google Search Console data and get real answers. Not raw API rows. Actual analysis.
 
-No subscriptions. No API costs. Your data stays on your machine.
+"What are my quick wins?" "Which pages are cannibalising each other?" "What content is decaying?" "Check for any alerts." "Give me content recommendations." Just ask, and the server runs the analysis on your live GSC data.
 
-**Full setup guide and walkthrough:** [suganthan.com/blog/google-search-console-mcp-server/](https://suganthan.com/blog/google-search-console-mcp-server/)
+**v2.0:** OAuth support, alerting, scheduled reports, content recommendations, multi-site dashboards, advanced filtering.
 
-## What it does
+Full walkthrough: [suganthan.com/blog/google-search-console-mcp-server/](https://suganthan.com/blog/google-search-console-mcp-server/)
 
-11 built in tools that cover the things you actually check:
+## Setup
 
-| Tool | What it does |
-|---|---|
-| `site_snapshot` | Overall performance vs previous period with percentage changes |
-| `quick_wins` | Keywords at positions 4 to 15 with high impressions you could push to page one |
-| `content_gaps` | Queries where you get impressions but rank beyond position 20 |
-| `traffic_drops` | Pages that lost traffic, diagnosed as ranking loss, CTR collapse, or demand decline |
-| `ctr_opportunities` | Pages with CTR below benchmark for their position (title/meta candidates) |
-| `cannibalization_check` | Keywords where multiple pages from your site compete against each other |
-| `content_decay` | Pages with three consecutive months of traffic decline |
-| `inspect_url` | Indexing status, crawl info, canonical issues, mobile usability |
-| `topic_cluster_performance` | Aggregate performance for all pages under a URL path |
-| `ctr_vs_benchmark` | Your actual CTR compared to industry averages by position |
-| `verify_claim` | Self-check: verifies a specific numeric claim against live GSC data |
+Two auth options. Pick one.
 
-Because it runs through Claude, you can ask follow up questions, combine analyses, and get recommendations, not just raw data.
+### Option A: OAuth (recommended)
 
-## Hallucination guardrails
-
-MCP servers return real data from real APIs. But the AI model interpreting that data can still make mistakes: rounding numbers, inventing explanations, or filling gaps with assumptions from its training data.
-
-This server has three layers of protection against that, added after feedback from [Krinal Mehta](https://www.linkedin.com/in/krinal/):
-
-**1. Guardrail prompts.** Every tool description includes an explicit instruction telling the model to base its analysis only on the returned data, report exact numbers, and say "I don't know" rather than speculate about causes the data doesn't support.
-
-**2. Data provenance metadata.** Every response includes a `_meta` field confirming the data source (Google Search Console API), the tool that produced it, and the parameters used. This anchors the model to the actual numbers rather than its training data.
-
-**3. Verify claim tool.** A dedicated `verify_claim` tool that lets the model self-check before presenting findings. Pass a claim ("homepage gets 500 clicks"), the metric, and the expected value. The tool re-queries the API and returns whether the claim is verified, with any discrepancy noted.
-
-These don't eliminate the possibility of misinterpretation, but they significantly reduce it. The data itself is always exact (it comes directly from Google's API), and the model is explicitly told to treat it as such.
-
-## Requirements
-
-- Node.js 18 or later
-- A Google Cloud project (free)
-- Google Search Console API enabled (free)
-- A service account with access to your Search Console property
-- Claude Desktop or Claude Code
-
-## Quick start
-
-### 1. Google Cloud setup
-
-1. Go to [console.cloud.google.com](https://console.cloud.google.com) and create a new project
-2. Search for **Google Search Console API** and enable it
-3. Go to **IAM & Admin > Service Accounts** and create a service account
-4. Create a JSON key for the service account and download it
-5. In [Google Search Console](https://search.google.com/search-console), go to **Settings > Users and permissions** and add the service account email with **Full** permission
-
-### 2. Configure Claude Desktop
-
-Add this to your Claude Desktop MCP config (`Settings > Developer > Edit Config`):
+1. Create a Google Cloud project and enable the **Search Console API**
+2. Go to **Credentials > Create Credentials > OAuth client ID**, choose **Desktop app**
+3. Download the client secrets JSON
+4. Add to Claude Desktop config:
 
 ```json
 {
@@ -69,85 +26,126 @@ Add this to your Claude Desktop MCP config (`Settings > Developer > Edit Config`
       "command": "npx",
       "args": ["-y", "@anthropic-ai/gsc-mcp"],
       "env": {
-        "GSC_KEY_FILE": "/path/to/your/service-account-key.json",
-        "GSC_SITE_URL": "sc-domain:yourdomain.com"
+        "GSC_AUTH_MODE": "oauth",
+        "GSC_OAUTH_SECRETS_FILE": "/path/to/client_secrets.json",
+        "GSC_SITE_URL": "sc-domain:yoursite.com"
       }
     }
   }
 }
 ```
 
-### Or with Claude Code
+First use opens a browser for Google sign in. Token is cached after that.
 
-```bash
-claude mcp add gsc -- npx -y @anthropic-ai/gsc-mcp
-```
+### Option B: Service Account
 
-Then set the environment variables in your config.
-
-### 3. Restart Claude and ask a question
-
-```
-"Give me a snapshot of how my site is performing"
-"What are my quick win keywords?"
-"Which pages lost traffic this month?"
-```
-
-## Important: Domain property format
-
-If your Search Console property is a **Domain property** (most are), set `GSC_SITE_URL` to:
-
-```
-sc-domain:yourdomain.com
-```
-
-Not `https://yourdomain.com/`. This is the most common setup issue.
-
-## Environment variables
-
-| Variable | Required | Description |
-|---|---|---|
-| `GSC_KEY_FILE` | Yes | Absolute path to your service account JSON key file |
-| `GSC_SITE_URL` | Yes | Your Search Console property URL. Use `sc-domain:example.com` for Domain properties or `https://example.com/` for URL prefix properties |
-
-## Running from source
-
-```bash
-git clone https://github.com/Suganthan-Mohanadasan/Suganthans-GSC-MCP.git
-cd Suganthans-GSC-MCP
-npm install
-npm run build
-```
-
-Then point your MCP config to the local build:
+1. Create a Google Cloud project and enable the **Search Console API**
+2. Go to **IAM & Admin > Service Accounts**, create one, download the JSON key
+3. Add the service account email to your GSC property (Settings > Users and permissions > Full access)
+4. Add to Claude Desktop config:
 
 ```json
 {
   "mcpServers": {
     "gsc": {
-      "command": "node",
-      "args": ["/path/to/Suganthans-GSC-MCP/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/gsc-mcp"],
       "env": {
-        "GSC_KEY_FILE": "/path/to/your/service-account-key.json",
-        "GSC_SITE_URL": "sc-domain:yourdomain.com"
+        "GSC_KEY_FILE": "/path/to/service-account.json",
+        "GSC_SITE_URL": "sc-domain:yoursite.com"
       }
     }
   }
 }
 ```
 
-## Privacy and security
+### Multi-site setup
 
-- Runs entirely on your machine
-- Connects directly to Google's API using your own credentials
-- No data sent to third party services
-- No analytics, tracking, or telemetry
-- Open source: read every line of code yourself
+For multiple properties, add `GSC_SITE_URLS`:
+
+```json
+"env": {
+  "GSC_KEY_FILE": "/path/to/service-account.json",
+  "GSC_SITE_URL": "sc-domain:primarysite.com",
+  "GSC_SITE_URLS": "sc-domain:primarysite.com,sc-domain:secondsite.com,https://thirdsite.com/"
+}
+```
+
+## Example prompts
+
+```
+"What are my quick win keywords?"
+"Check for any SEO alerts in the last 7 days"
+"Give me content recommendations"
+"Generate a full performance report and save it"
+"Show me a dashboard across all my sites"
+"Show me US mobile traffic for the last 90 days"
+"Which pages are cannibalising each other?"
+"What content is decaying?"
+"Is /blog/my-post/ indexed?"
+```
+
+## Tools (16 total)
+
+### Analysis tools
+
+| Tool | What it answers |
+|---|---|
+| `site_snapshot` | How is the site doing overall? |
+| `quick_wins` | Which keywords could I push to page one? |
+| `ctr_opportunities` | Which pages are people seeing but not clicking? |
+| `traffic_drops` | What lost traffic recently, and why? |
+| `content_gaps` | What topics should I create content for? |
+| `cannibalization_check` | Which pages compete against each other? |
+| `content_decay` | Which pages are slowly dying? |
+| `topic_cluster_performance` | How is this group of pages performing? |
+| `ctr_vs_benchmark` | Where is my CTR underperforming for my position? |
+| `inspect_url` | Is this URL indexed, and if not, why? |
+
+### New in v2.0
+
+| Tool | What it answers |
+|---|---|
+| `advanced_search_analytics` | Custom queries with flexible dimensions and filters (country, device, query, page) |
+| `check_alerts` | What needs attention right now? Position drops, CTR collapses, disappearing pages |
+| `content_recommendations` | What should I update, create, or consolidate, and in what order? |
+| `generate_report` | Save a full markdown report to disk (snapshot + alerts + wins + drops + decay + recommendations) |
+| `multi_site_dashboard` | Health check across all my properties in one view |
+
+### Safety
+
+| Tool | What it does |
+|---|---|
+| `verify_claim` | Self-check: verifies a numeric claim against live GSC data before presenting it |
+
+## What makes this different
+
+**Fresh data.** Uses `dataState: 'all'` so data matches the GSC dashboard, not 2 to 3 days stale.
+
+**Question-shaped tools.** Named after the question they answer, not the API endpoint they call.
+
+**Compound analysis.** Cannibalization detection, decay trends, CTR benchmarking, traffic drop diagnosis, content recommendations, and alerting are all pre-built.
+
+**Hallucination guardrails.** Tool descriptions instruct Claude to stick to the data. Provenance metadata anchors responses. The `verify_claim` tool lets Claude self-check numbers. Credit to [Krinal Mehta](https://www.linkedin.com/in/krinal/) for pushing this.
+
+**Scheduled reports.** Generate a full markdown report with one command. Designed for weekly reviews.
+
+**Multi-site dashboards.** One command to check the health of every property you manage.
+
+## Environment variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `GSC_AUTH_MODE` | No | `oauth` or `service_account` (default: `service_account`) |
+| `GSC_KEY_FILE` | Service account mode | Path to service account JSON key |
+| `GSC_OAUTH_SECRETS_FILE` | OAuth mode | Path to OAuth client secrets JSON |
+| `GSC_OAUTH_CLIENT_ID` | OAuth mode (alt) | OAuth client ID |
+| `GSC_OAUTH_CLIENT_SECRET` | OAuth mode (alt) | OAuth client secret |
+| `GSC_SITE_URL` | Yes | Primary GSC property URL |
+| `GSC_SITE_URLS` | No | Comma-separated list for multi-site |
 
 ## Licence
 
 MIT
-
-## Author
 
 Built by [Suganthan Mohanadasan](https://suganthan.com). If you find it useful, give it a star.

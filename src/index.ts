@@ -16,10 +16,15 @@ import { contentDecay } from "./tools/content-decay.js";
 import { topicClusterPerformance } from "./tools/topic-cluster-performance.js";
 import { ctrVsBenchmark } from "./tools/ctr-vs-benchmark.js";
 import { verifyClaim } from "./tools/verify-claim.js";
+import { advancedSearchAnalytics } from "./tools/advanced-search-analytics.js";
+import { checkAlerts } from "./tools/check-alerts.js";
+import { contentRecommendations } from "./tools/content-recommendations.js";
+import { generateReport } from "./tools/generate-report.js";
+import { multiSiteDashboard } from "./tools/multi-site-dashboard.js";
 
 const server = new McpServer({
   name: "gsc-mcp",
-  version: "1.1.0",
+  version: "2.0.0",
 });
 
 // 1. Quick Wins
@@ -208,10 +213,106 @@ server.tool(
   }
 );
 
+// 12. Advanced Search Analytics
+server.tool(
+  "advanced_search_analytics",
+  "Run a custom search analytics query with flexible dimensions and filters. Supports country, device, query, and page filtering. For power users who need specific data cuts." + GUARDRAIL_SUFFIX,
+  {
+    days: z.number().default(28).describe("Number of days to analyse"),
+    dimensions: z.array(z.string()).default(["query"]).describe("Dimensions to group by: query, page, country, device, date"),
+    filters: z.array(z.object({
+      dimension: z.string().describe("Dimension to filter: query, page, country, device"),
+      operator: z.string().describe("Operator: contains, notContains, equals, notEquals, includingRegex, excludingRegex"),
+      expression: z.string().describe("Filter value"),
+    })).default([]).describe("Dimension filters to apply"),
+    row_limit: z.number().default(100).describe("Maximum rows to return (max 500)"),
+    order_by: z.string().default("clicks").describe("Sort by: clicks, impressions, ctr, position"),
+    order_direction: z.string().default("descending").describe("Sort direction: ascending, descending"),
+    site_url: z.string().optional().describe("Override the default site URL"),
+  },
+  async ({ days, dimensions, filters, row_limit, order_by, order_direction, site_url }) => {
+    const results = await advancedSearchAnalytics(days, dimensions, filters, row_limit, order_by, order_direction, site_url);
+    const wrapped = withMeta(results, "advanced_search_analytics", { days, dimensions, filters, row_limit, order_by });
+    return {
+      content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+  }
+);
+
+// 13. Check Alerts
+server.tool(
+  "check_alerts",
+  "Check for SEO alerts: position drops, CTR collapses, click losses, and pages that disappeared from search results. Returns severity-rated alerts so you know what needs attention first." + GUARDRAIL_SUFFIX,
+  {
+    days: z.number().default(7).describe("Number of days per period to compare"),
+    position_drop_threshold: z.number().default(20).describe("Alert if position drops more than this many spots"),
+    ctr_drop_threshold: z.number().default(50).describe("Alert if CTR drops more than this percentage"),
+    click_drop_threshold: z.number().default(30).describe("Alert if clicks drop more than this percentage"),
+  },
+  async ({ days, position_drop_threshold, ctr_drop_threshold, click_drop_threshold }) => {
+    const results = await checkAlerts(days, position_drop_threshold, ctr_drop_threshold, click_drop_threshold);
+    const wrapped = withMeta(results, "check_alerts", { days, position_drop_threshold, ctr_drop_threshold, click_drop_threshold });
+    return {
+      content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+  }
+);
+
+// 14. Content Recommendations
+server.tool(
+  "content_recommendations",
+  "Get actionable content recommendations by cross-referencing quick wins, content gaps, and cannibalisation data. Returns prioritised actions: pages to update, content to create, and pages to consolidate." + GUARDRAIL_SUFFIX,
+  {
+    days: z.number().default(28).describe("Number of days to analyse"),
+    max_recommendations: z.number().default(10).describe("Maximum number of recommendations"),
+  },
+  async ({ days, max_recommendations }) => {
+    const results = await contentRecommendations(days, max_recommendations);
+    const wrapped = withMeta(results, "content_recommendations", { days, max_recommendations });
+    return {
+      content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+  }
+);
+
+// 15. Generate Report
+server.tool(
+  "generate_report",
+  "Generate a comprehensive markdown performance report. Covers site snapshot, alerts, quick wins, traffic drops, content decay, and recommendations. Saves to disk for weekly reviews or scheduled reporting." + GUARDRAIL_SUFFIX,
+  {
+    output_path: z.string().optional().describe("File path to save the report (default: ./gsc-report-{date}.md)"),
+    days: z.number().default(28).describe("Number of days to analyse"),
+    include_sections: z.array(z.string()).optional().describe("Sections: snapshot, alerts, quick_wins, traffic_drops, content_decay, recommendations"),
+  },
+  async ({ output_path, days, include_sections }) => {
+    const results = await generateReport(output_path, days, include_sections);
+    return {
+      content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+    };
+  }
+);
+
+// 16. Multi-Site Dashboard
+server.tool(
+  "multi_site_dashboard",
+  "Health check across multiple GSC properties in one view. Shows clicks, impressions, CTR, and position for each site with period comparison and health status. Agency essential." + GUARDRAIL_SUFFIX,
+  {
+    site_urls: z.array(z.string()).optional().describe("Array of GSC property URLs. Falls back to GSC_SITE_URLS env var."),
+    days: z.number().default(28).describe("Number of days per period"),
+  },
+  async ({ site_urls, days }) => {
+    const results = await multiSiteDashboard(site_urls, days);
+    const wrapped = withMeta(results, "multi_site_dashboard", { site_urls, days });
+    return {
+      content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+  }
+);
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("GSC MCP server v1.1.0 running on stdio");
+  console.error("GSC MCP server v2.0.0 running on stdio");
 }
 
 main().catch((error) => {

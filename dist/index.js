@@ -16,9 +16,14 @@ const content_decay_js_1 = require("./tools/content-decay.js");
 const topic_cluster_performance_js_1 = require("./tools/topic-cluster-performance.js");
 const ctr_vs_benchmark_js_1 = require("./tools/ctr-vs-benchmark.js");
 const verify_claim_js_1 = require("./tools/verify-claim.js");
+const advanced_search_analytics_js_1 = require("./tools/advanced-search-analytics.js");
+const check_alerts_js_1 = require("./tools/check-alerts.js");
+const content_recommendations_js_1 = require("./tools/content-recommendations.js");
+const generate_report_js_1 = require("./tools/generate-report.js");
+const multi_site_dashboard_js_1 = require("./tools/multi-site-dashboard.js");
 const server = new mcp_js_1.McpServer({
     name: "gsc-mcp",
-    version: "1.1.0",
+    version: "2.0.0",
 });
 // 1. Quick Wins
 server.tool("quick_wins", "Find keywords you're almost ranking for that could be pushed to page one. Returns queries at positions 4-15 with high impressions, sorted by traffic opportunity." + guardrails_js_1.GUARDRAIL_SUFFIX, {
@@ -140,10 +145,76 @@ server.tool("verify_claim", "Verify a specific numeric claim against live GSC da
         content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
     };
 });
+// 12. Advanced Search Analytics
+server.tool("advanced_search_analytics", "Run a custom search analytics query with flexible dimensions and filters. Supports country, device, query, and page filtering. For power users who need specific data cuts." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+    days: zod_1.z.number().default(28).describe("Number of days to analyse"),
+    dimensions: zod_1.z.array(zod_1.z.string()).default(["query"]).describe("Dimensions to group by: query, page, country, device, date"),
+    filters: zod_1.z.array(zod_1.z.object({
+        dimension: zod_1.z.string().describe("Dimension to filter: query, page, country, device"),
+        operator: zod_1.z.string().describe("Operator: contains, notContains, equals, notEquals, includingRegex, excludingRegex"),
+        expression: zod_1.z.string().describe("Filter value"),
+    })).default([]).describe("Dimension filters to apply"),
+    row_limit: zod_1.z.number().default(100).describe("Maximum rows to return (max 500)"),
+    order_by: zod_1.z.string().default("clicks").describe("Sort by: clicks, impressions, ctr, position"),
+    order_direction: zod_1.z.string().default("descending").describe("Sort direction: ascending, descending"),
+    site_url: zod_1.z.string().optional().describe("Override the default site URL"),
+}, async ({ days, dimensions, filters, row_limit, order_by, order_direction, site_url }) => {
+    const results = await (0, advanced_search_analytics_js_1.advancedSearchAnalytics)(days, dimensions, filters, row_limit, order_by, order_direction, site_url);
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "advanced_search_analytics", { days, dimensions, filters, row_limit, order_by });
+    return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+});
+// 13. Check Alerts
+server.tool("check_alerts", "Check for SEO alerts: position drops, CTR collapses, click losses, and pages that disappeared from search results. Returns severity-rated alerts so you know what needs attention first." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+    days: zod_1.z.number().default(7).describe("Number of days per period to compare"),
+    position_drop_threshold: zod_1.z.number().default(20).describe("Alert if position drops more than this many spots"),
+    ctr_drop_threshold: zod_1.z.number().default(50).describe("Alert if CTR drops more than this percentage"),
+    click_drop_threshold: zod_1.z.number().default(30).describe("Alert if clicks drop more than this percentage"),
+}, async ({ days, position_drop_threshold, ctr_drop_threshold, click_drop_threshold }) => {
+    const results = await (0, check_alerts_js_1.checkAlerts)(days, position_drop_threshold, ctr_drop_threshold, click_drop_threshold);
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "check_alerts", { days, position_drop_threshold, ctr_drop_threshold, click_drop_threshold });
+    return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+});
+// 14. Content Recommendations
+server.tool("content_recommendations", "Get actionable content recommendations by cross-referencing quick wins, content gaps, and cannibalisation data. Returns prioritised actions: pages to update, content to create, and pages to consolidate." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+    days: zod_1.z.number().default(28).describe("Number of days to analyse"),
+    max_recommendations: zod_1.z.number().default(10).describe("Maximum number of recommendations"),
+}, async ({ days, max_recommendations }) => {
+    const results = await (0, content_recommendations_js_1.contentRecommendations)(days, max_recommendations);
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "content_recommendations", { days, max_recommendations });
+    return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+});
+// 15. Generate Report
+server.tool("generate_report", "Generate a comprehensive markdown performance report. Covers site snapshot, alerts, quick wins, traffic drops, content decay, and recommendations. Saves to disk for weekly reviews or scheduled reporting." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+    output_path: zod_1.z.string().optional().describe("File path to save the report (default: ./gsc-report-{date}.md)"),
+    days: zod_1.z.number().default(28).describe("Number of days to analyse"),
+    include_sections: zod_1.z.array(zod_1.z.string()).optional().describe("Sections: snapshot, alerts, quick_wins, traffic_drops, content_decay, recommendations"),
+}, async ({ output_path, days, include_sections }) => {
+    const results = await (0, generate_report_js_1.generateReport)(output_path, days, include_sections);
+    return {
+        content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+    };
+});
+// 16. Multi-Site Dashboard
+server.tool("multi_site_dashboard", "Health check across multiple GSC properties in one view. Shows clicks, impressions, CTR, and position for each site with period comparison and health status. Agency essential." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+    site_urls: zod_1.z.array(zod_1.z.string()).optional().describe("Array of GSC property URLs. Falls back to GSC_SITE_URLS env var."),
+    days: zod_1.z.number().default(28).describe("Number of days per period"),
+}, async ({ site_urls, days }) => {
+    const results = await (0, multi_site_dashboard_js_1.multiSiteDashboard)(site_urls, days);
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "multi_site_dashboard", { site_urls, days });
+    return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+});
 async function main() {
     const transport = new stdio_js_1.StdioServerTransport();
     await server.connect(transport);
-    console.error("GSC MCP server v1.1.0 running on stdio");
+    console.error("GSC MCP server v2.0.0 running on stdio");
 }
 main().catch((error) => {
     console.error("Fatal error:", error);
