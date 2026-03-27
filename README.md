@@ -2,29 +2,76 @@
 
 Ask Claude questions about your Google Search Console data and get real answers. Not raw API rows. Actual analysis.
 
-"What are my quick wins?" "Which pages are cannibalising each other?" "What content is decaying?" "Check for any alerts." "Give me content recommendations." Just ask, and the server runs the analysis on your live GSC data.
+20 tools. OAuth or service account. Free and open source.
 
-**v2.1:** Indexing API (submit URLs for crawling, batch submit, sitemap management). Plus OAuth, alerting, scheduled reports, content recommendations, multi-site dashboards, advanced filtering.
+> **Full setup guide with screenshots:** [suganthan.com/blog/google-search-console-mcp-server/](https://suganthan.com/blog/google-search-console-mcp-server/)
 
-Full walkthrough: [suganthan.com/blog/google-search-console-mcp-server/](https://suganthan.com/blog/google-search-console-mcp-server/)
+## See it in action
 
-## Setup
+**"How is my site doing?"**
 
-Two auth options. Pick one.
+![Site snapshot with period comparison](screenshots/snapshot.jpg)
+
+**"What are my quick win keywords?"**
+
+![Quick wins analysis showing positions 4-15 with opportunity scores](screenshots/quick%20wins2.jpg)
+
+**"Which pages are cannibalising each other?"**
+
+![Cannibalisation detection across the site](screenshots/canni.jpg)
+
+**"What content is slowly dying?"**
+
+![Content decay detection over three consecutive periods](screenshots/dying.jpg)
+
+**"Which pages lost traffic and why?"**
+
+![Traffic drop diagnosis: ranking loss vs CTR collapse vs demand decline](screenshots/lost.jpg)
+
+**"How does my CTR compare to benchmarks?"**
+
+![CTR vs industry benchmarks by position](screenshots/CTR.jpg)
+
+**"How is my blog cluster performing?"**
+
+![Topic cluster performance for a URL path pattern](screenshots/topics.jpg)
+
+## What you can ask
+
+```
+"What are my quick win keywords?"
+"Which pages lost traffic this month and why?"
+"What content is decaying?"
+"Which pages are cannibalising each other?"
+"Check for any SEO alerts in the last 7 days"
+"Give me content recommendations"
+"How does my CTR compare to benchmarks?"
+"How is my /blog/ cluster performing?"
+"Show me US mobile traffic for the last 90 days"
+"Is /blog/my-post/ indexed? If not, why?"
+"Generate a full performance report and save it"
+"Show me a dashboard across all my sites"
+"Submit this URL for indexing: https://mysite.com/new-post/"
+"Batch submit all my new blog posts for indexing"
+"List my sitemaps and their status"
+"Verify that claim about my homepage clicks"
+```
+
+## Quick start
 
 ### Option A: OAuth (recommended)
 
 1. Create a Google Cloud project and enable the **Search Console API**
 2. Go to **Credentials > Create Credentials > OAuth client ID**, choose **Desktop app**
 3. Download the client secrets JSON
-4. Add to Claude Desktop config:
+4. Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
     "gsc": {
-      "command": "npx",
-      "args": ["-y", "@anthropic-ai/gsc-mcp"],
+      "command": "node",
+      "args": ["/path/to/Suganthans-GSC-MCP/dist/index.js"],
       "env": {
         "GSC_AUTH_MODE": "oauth",
         "GSC_OAUTH_SECRETS_FILE": "/path/to/client_secrets.json",
@@ -42,14 +89,14 @@ First use opens a browser for Google sign in. Token is cached after that.
 1. Create a Google Cloud project and enable the **Search Console API**
 2. Go to **IAM & Admin > Service Accounts**, create one, download the JSON key
 3. Add the service account email to your GSC property (Settings > Users and permissions > Full access)
-4. Add to Claude Desktop config:
+4. Add to your Claude Desktop config:
 
 ```json
 {
   "mcpServers": {
     "gsc": {
-      "command": "npx",
-      "args": ["-y", "@anthropic-ai/gsc-mcp"],
+      "command": "node",
+      "args": ["/path/to/Suganthans-GSC-MCP/dist/index.js"],
       "env": {
         "GSC_KEY_FILE": "/path/to/service-account.json",
         "GSC_SITE_URL": "sc-domain:yoursite.com"
@@ -59,100 +106,72 @@ First use opens a browser for Google sign in. Token is cached after that.
 }
 ```
 
-### Indexing API setup (for submit_url, submit_batch)
+### Indexing API (optional)
 
-To use the indexing tools, enable the **Indexing API** in your Google Cloud project:
+To use `submit_url`, `submit_batch`, and `submit_sitemap`:
 
-1. Go to [APIs & Services > Library](https://console.cloud.google.com/apis/library/indexing.googleapis.com)
-2. Search for "Web Search Indexing API" and enable it
-3. Your service account (or OAuth credentials) need owner-level access in Search Console
+1. Enable the **Web Search Indexing API** in your [Google Cloud console](https://console.cloud.google.com/apis/library/indexing.googleapis.com)
+2. Your service account (or OAuth credentials) need owner-level access in Search Console
 
-Note: Google officially says the Indexing API is for JobPosting and BroadcastEvent schema types. In practice, it processes requests for all page types. Priority is not guaranteed for non-job pages.
+Note: Google officially says the Indexing API is for JobPosting and BroadcastEvent schema types. In practice, it processes requests for all page types.
 
-### Multi-site setup
+### Multi-site
 
 For multiple properties, add `GSC_SITE_URLS`:
 
 ```json
 "env": {
-  "GSC_KEY_FILE": "/path/to/service-account.json",
   "GSC_SITE_URL": "sc-domain:primarysite.com",
-  "GSC_SITE_URLS": "sc-domain:primarysite.com,sc-domain:secondsite.com,https://thirdsite.com/"
+  "GSC_SITE_URLS": "sc-domain:primarysite.com,sc-domain:secondsite.com"
 }
 ```
 
-## Example prompts
+## All 20 tools
 
-```
-"What are my quick win keywords?"
-"Check for any SEO alerts in the last 7 days"
-"Give me content recommendations"
-"Generate a full performance report and save it"
-"Show me a dashboard across all my sites"
-"Show me US mobile traffic for the last 90 days"
-"Which pages are cannibalising each other?"
-"What content is decaying?"
-"Is /blog/my-post/ indexed?"
-"Submit this URL for indexing: https://mysite.com/new-post/"
-"Batch submit all my new blog posts for indexing"
-"List my sitemaps and their status"
-```
-
-## Tools (20 total)
-
-### Analysis tools
+### Analysis
 
 | Tool | What it answers |
 |---|---|
-| `site_snapshot` | How is the site doing overall? |
-| `quick_wins` | Which keywords could I push to page one? |
-| `ctr_opportunities` | Which pages are people seeing but not clicking? |
-| `traffic_drops` | What lost traffic recently, and why? |
-| `content_gaps` | What topics should I create content for? |
-| `cannibalization_check` | Which pages compete against each other? |
-| `content_decay` | Which pages are slowly dying? |
-| `topic_cluster_performance` | How is this group of pages performing? |
-| `ctr_vs_benchmark` | Where is my CTR underperforming for my position? |
-| `inspect_url` | Is this URL indexed, and if not, why? |
+| `site_snapshot` | How is the site doing overall? Clicks, impressions, CTR, position with period comparison |
+| `quick_wins` | Keywords at positions 4-15 with high impressions, scored by opportunity |
+| `ctr_opportunities` | Pages with high impressions but CTR below expected for their position |
+| `traffic_drops` | What lost traffic, and whether it's a ranking loss, CTR collapse, or demand decline |
+| `content_gaps` | Topics with search demand but no real content targeting them |
+| `cannibalization_check` | Keywords where multiple pages compete against each other |
+| `content_decay` | Pages declining across three consecutive 30-day periods |
+| `topic_cluster_performance` | Aggregated performance for all pages matching a URL path pattern |
+| `ctr_vs_benchmark` | Your actual CTR per position vs industry benchmarks |
+| `inspect_url` | Is this URL indexed? Last crawl date, canonical, robots/noindex issues |
+| `check_alerts` | Position drops, CTR collapses, click losses, disappeared pages. Severity-rated |
+| `content_recommendations` | Prioritised actions: pages to update, content to create, pages to consolidate |
+| `advanced_search_analytics` | Custom queries with flexible dimensions and filters |
+| `generate_report` | Full markdown report saved to disk |
+| `multi_site_dashboard` | Health check across all properties in one command |
 
-### New in v2.0
-
-| Tool | What it answers |
-|---|---|
-| `advanced_search_analytics` | Custom queries with flexible dimensions and filters (country, device, query, page) |
-| `check_alerts` | What needs attention right now? Position drops, CTR collapses, disappearing pages |
-| `content_recommendations` | What should I update, create, or consolidate, and in what order? |
-| `generate_report` | Save a full markdown report to disk (snapshot + alerts + wins + drops + decay + recommendations) |
-| `multi_site_dashboard` | Health check across all my properties in one view |
-
-### Indexing (new in v2.1)
+### Indexing
 
 | Tool | What it does |
 |---|---|
-| `submit_url` | Submit a URL to Google's Indexing API for crawling/indexing |
-| `submit_batch` | Batch submit up to 200 URLs in one go (daily quota) |
+| `submit_url` | Submit a URL to Google's Indexing API for crawling |
+| `submit_batch` | Batch submit up to 200 URLs (daily quota) |
 | `submit_sitemap` | Notify Google of a new or updated sitemap |
-| `list_sitemaps` | List all submitted sitemaps with status, errors, and indexed counts |
+| `list_sitemaps` | All submitted sitemaps with status, errors, and indexed counts |
 
 ### Safety
 
 | Tool | What it does |
 |---|---|
-| `verify_claim` | Self-check: verifies a numeric claim against live GSC data before presenting it |
+| `verify_claim` | Self-check: re-queries GSC data to verify a numeric claim before presenting it |
 
-## What makes this different
+## What makes this different from other GSC MCP servers
 
-**Fresh data.** Uses `dataState: 'all'` so data matches the GSC dashboard, not 2 to 3 days stale.
+**Analysis, not just API access.** Most GSC MCP servers wrap the raw API. This one ships with pre-built analysis: opportunity scoring, cannibalisation detection, decay tracking, CTR benchmarking, traffic drop diagnosis. You ask a question, it runs the analysis and tells you what to do.
 
-**Question-shaped tools.** Named after the question they answer, not the API endpoint they call.
+**Hallucination guardrails.** Every tool instructs Claude to base analysis only on returned data. Provenance metadata in every response. The `verify_claim` tool lets Claude fact-check its own numbers. Credit to [Krinal Mehta](https://www.linkedin.com/in/krinal/) for pushing this.
 
-**Compound analysis.** Cannibalization detection, decay trends, CTR benchmarking, traffic drop diagnosis, content recommendations, and alerting are all pre-built.
+**Fresh data.** Uses `dataState: 'all'` so data matches the GSC dashboard, not 2-3 days stale.
 
-**Hallucination guardrails.** Tool descriptions instruct Claude to stick to the data. Provenance metadata anchors responses. The `verify_claim` tool lets Claude self-check numbers. Credit to [Krinal Mehta](https://www.linkedin.com/in/krinal/) for pushing this.
-
-**Scheduled reports.** Generate a full markdown report with one command. Designed for weekly reviews.
-
-**Multi-site dashboards.** One command to check the health of every property you manage.
+**Proactive, not reactive.** Alerting, content recommendations, and scheduled reports catch problems before you think to look.
 
 ## Environment variables
 
@@ -166,8 +185,14 @@ For multiple properties, add `GSC_SITE_URLS`:
 | `GSC_SITE_URL` | Yes | Primary GSC property URL |
 | `GSC_SITE_URLS` | No | Comma-separated list for multi-site |
 
+## Full guide
+
+Step-by-step setup with screenshots, use cases, and examples:
+
+**[suganthan.com/blog/google-search-console-mcp-server/](https://suganthan.com/blog/google-search-console-mcp-server/)**
+
 ## Licence
 
 MIT
 
-Built by [Suganthan Mohanadasan](https://suganthan.com). If you find it useful, give it a star.
+Built by [Suganthan Mohanadasan](https://suganthan.com). If you find it useful, star it.
