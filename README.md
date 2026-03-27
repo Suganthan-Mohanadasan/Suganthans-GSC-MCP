@@ -1,6 +1,6 @@
-# GSC MCP Server
+# Google Search Console MCP Server
 
-Ask Claude questions about your Google Search Console data and get real answers. Not raw API rows. Actual analysis.
+An MCP server for Google Search Console that lets you ask Claude questions about your search data and get real answers. Not raw API rows. Actual analysis.
 
 20 tools. OAuth or service account. Free and open source.
 
@@ -163,9 +163,9 @@ For multiple properties, add `GSC_SITE_URLS`:
 |---|---|
 | `verify_claim` | Self-check: re-queries GSC data to verify a numeric claim before presenting it |
 
-## What makes this different from other GSC MCP servers
+## What makes this different from other Google Search Console MCP servers
 
-**Analysis, not just API access.** Most GSC MCP servers wrap the raw API. This one ships with pre-built analysis: opportunity scoring, cannibalisation detection, decay tracking, CTR benchmarking, traffic drop diagnosis. You ask a question, it runs the analysis and tells you what to do.
+**Analysis, not just API access.** Most Google Search Console MCP servers wrap the raw API. This one ships with pre-built analysis: opportunity scoring, cannibalisation detection, decay tracking, CTR benchmarking, traffic drop diagnosis. You ask a question, it runs the analysis and tells you what to do.
 
 **Hallucination guardrails.** Every tool instructs Claude to base analysis only on returned data. Provenance metadata in every response. The `verify_claim` tool lets Claude fact-check its own numbers. Credit to [Krinal Mehta](https://www.linkedin.com/in/krinal/) for pushing this.
 
