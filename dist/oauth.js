@@ -42,6 +42,9 @@ const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const http = __importStar(require("http"));
 const os = __importStar(require("os"));
+let isAuthRunning = false;
+let oauthServer = null;
+let currentAuthPromise = null;
 const TOKEN_DIR = path.join(os.homedir(), ".gsc-mcp");
 const TOKEN_PATH = path.join(TOKEN_DIR, "oauth-token.json");
 function ensureTokenDir() {
@@ -93,36 +96,62 @@ function getOAuthConfig() {
  */
 function startLocalCallbackServer(port) {
     return new Promise((resolve, reject) => {
-        const server = http.createServer((req, res) => {
-            const url = new URL(req.url || "/", `http://localhost:${port}`);
-            const code = url.searchParams.get("code");
-            const error = url.searchParams.get("error");
-            if (error) {
-                res.writeHead(200, { "Content-Type": "text/html" });
-                res.end("<html><body><h2>Authentication failed.</h2><p>You can close this tab.</p></body></html>");
-                server.close();
-                reject(new Error(`OAuth error: ${error}`));
-                return;
-            }
-            if (code) {
-                res.writeHead(200, { "Content-Type": "text/html" });
-                res.end("<html><body><h2>Authentication successful!</h2><p>You can close this tab and return to your MCP client.</p></body></html>");
-                server.close();
-                resolve(code);
-                return;
-            }
-            res.writeHead(400);
-            res.end("Missing code parameter");
-        });
-        server.listen(port, "127.0.0.1", () => {
-            console.error(`OAuth callback server listening on http://127.0.0.1:${port}`);
-        });
-        server.on("error", reject);
-        // Timeout after 2 minutes
-        setTimeout(() => {
-            server.close();
-            reject(new Error("OAuth authentication timed out after 2 minutes"));
-        }, 120000);
+        // Before starting a new server:
+        // If oauthServer exists, close it safely.
+        if (oauthServer) {
+            console.error("Closing existing OAuth server safely before starting a new one.");
+            oauthServer.close();
+            oauthServer = null;
+        }
+        // Only start server if not already listening
+        if (!oauthServer || !oauthServer.listening) {
+            console.error("Starting new OAuth callback server...");
+            oauthServer = http.createServer((req, res) => {
+                const url = new URL(req.url || "/", `http://localhost:${port}`);
+                const code = url.searchParams.get("code");
+                const error = url.searchParams.get("error");
+                if (error) {
+                    res.writeHead(200, { "Content-Type": "text/html" });
+                    res.end("<html><body><h2>Authentication failed.</h2><p>You can close this tab.</p></body></html>");
+                    if (oauthServer) {
+                        oauthServer.close(() => console.error("OAuth server closed on error."));
+                        oauthServer = null;
+                    }
+                    reject(new Error(`OAuth error: ${error}`));
+                    return;
+                }
+                if (code) {
+                    res.writeHead(200, { "Content-Type": "text/html" });
+                    res.end("<html><body><h2>Authentication successful!</h2><p>You can close this tab and return to your MCP client.</p></body></html>");
+                    if (oauthServer) {
+                        oauthServer.close(() => console.error("OAuth server closed on success."));
+                        oauthServer = null;
+                    }
+                    resolve(code);
+                    return;
+                }
+                res.writeHead(400);
+                res.end("Missing code parameter");
+            });
+            oauthServer.listen(port, "127.0.0.1", () => {
+                console.error(`OAuth callback server listening on http://127.0.0.1:${port}`);
+            });
+            oauthServer.on("error", (err) => {
+                console.error(`OAuth server error: ${err.message}`);
+                reject(err);
+            });
+            // Timeout after 2 minutes
+            setTimeout(() => {
+                if (oauthServer) {
+                    oauthServer.close(() => console.error("OAuth server closed due to timeout."));
+                    oauthServer = null;
+                }
+                reject(new Error("OAuth authentication timed out after 2 minutes"));
+            }, 120000);
+        }
+        else {
+            console.error("OAuth server is already listening, reusing existing server.");
+        }
     });
 }
 /**
@@ -131,7 +160,7 @@ function startLocalCallbackServer(port) {
  */
 async function authenticateWithOAuth() {
     const { clientId, clientSecret } = getOAuthConfig();
-    const callbackPort = 3847;
+    const callbackPort = parseInt(process.env.OAUTH_PORT || "4010", 10);
     const redirectUri = `http://127.0.0.1:${callbackPort}`;
     const oauth2Client = new googleapis_1.google.auth.OAuth2(clientId, clientSecret, redirectUri);
     // Check for cached token
@@ -159,31 +188,53 @@ async function authenticateWithOAuth() {
     return await runBrowserAuth(oauth2Client, callbackPort, redirectUri);
 }
 async function runBrowserAuth(oauth2Client, callbackPort, redirectUri) {
-    const authUrl = oauth2Client.generateAuthUrl({
-        access_type: "offline",
-        scope: [
-            "https://www.googleapis.com/auth/webmasters.readonly",
-            "https://www.googleapis.com/auth/webmasters",
-        ],
-        prompt: "consent",
-    });
-    // Start callback server before opening browser
-    const codePromise = startLocalCallbackServer(callbackPort);
-    // Open browser
-    console.error(`\nOpening browser for Google authentication...\nIf the browser doesn't open, visit this URL:\n${authUrl}\n`);
-    try {
-        const open = (await import("open")).default;
-        await open(authUrl);
+    if (isAuthRunning && currentAuthPromise) {
+        console.error("Authentication is already running. Preventing duplicate browser opening.");
+        return currentAuthPromise;
     }
-    catch {
-        console.error("Could not open browser automatically. Please visit the URL above.");
-    }
-    // Wait for the code
-    const code = await codePromise;
-    // Exchange code for tokens
-    const { tokens } = await oauth2Client.getToken(code);
-    oauth2Client.setCredentials(tokens);
-    saveCachedToken(tokens);
-    console.error("OAuth authentication successful, token cached");
-    return oauth2Client;
+    isAuthRunning = true;
+    console.error("--- Auth Start ---");
+    currentAuthPromise = (async () => {
+        try {
+            const authUrl = oauth2Client.generateAuthUrl({
+                access_type: "offline",
+                scope: [
+                    "https://www.googleapis.com/auth/webmasters.readonly",
+                    "https://www.googleapis.com/auth/webmasters",
+                ],
+                prompt: "consent",
+            });
+            // Start callback server before opening browser
+            const codePromise = startLocalCallbackServer(callbackPort);
+            // Open browser
+            console.error(`\nOpening browser for Google authentication...\nIf the browser doesn't open, visit this URL:\n${authUrl}\n`);
+            try {
+                const open = (await import("open")).default;
+                await open(authUrl);
+            }
+            catch {
+                console.error("Could not open browser automatically. Please visit the URL above.");
+            }
+            // Wait for the code
+            const code = await codePromise;
+            // Exchange code for tokens
+            const { tokens } = await oauth2Client.getToken(code);
+            oauth2Client.setCredentials(tokens);
+            saveCachedToken(tokens);
+            console.error("OAuth authentication successful, token cached");
+            return oauth2Client;
+        }
+        finally {
+            isAuthRunning = false;
+            currentAuthPromise = null;
+            console.error("--- Auth End ---");
+            // Ensure server shuts down after OAuth completes
+            if (oauthServer) {
+                console.error("Closing OAuth server after OAuth completes...");
+                oauthServer.close();
+                oauthServer = null;
+            }
+        }
+    })();
+    return currentAuthPromise;
 }
