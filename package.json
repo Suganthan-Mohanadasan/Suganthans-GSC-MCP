@@ -19,7 +19,7 @@
     "gsc"
   ],
   "author": "Suganthan Mohanadasan",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
     "googleapis": "^144.0.0",
