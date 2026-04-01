@@ -169,6 +169,8 @@ For multiple properties, add `GSC_SITE_URLS`:
 
 **Hallucination guardrails.** Every tool instructs Claude to base analysis only on returned data. Provenance metadata in every response. The `verify_claim` tool lets Claude fact-check its own numbers. Credit to [Krinal Mehta](https://www.linkedin.com/in/krinal/) for pushing this.
 
+**Visual dashboards.** Results render as rich, interactive visualisations in Claude Desktop. Summary cards, colour coded indicators, bar charts, and tabbed sections. Not plain text dumps.
+
 **Fresh data.** Uses `dataState: 'all'` so data matches the GSC dashboard, not 2-3 days stale.
 
 **Proactive, not reactive.** Alerting, content recommendations, and scheduled reports catch problems before you think to look.
