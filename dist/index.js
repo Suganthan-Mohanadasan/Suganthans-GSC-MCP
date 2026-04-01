@@ -28,7 +28,7 @@ const server = new mcp_js_1.McpServer({
     version: "2.1.0",
 });
 // 1. Quick Wins
-server.tool("quick_wins", "Find keywords you're almost ranking for that could be pushed to page one. Returns queries at positions 4-15 with high impressions, sorted by traffic opportunity." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("quick_wins", "Find keywords you're almost ranking for that could be pushed to page one. Returns queries at positions 4-15 with high impressions, sorted by traffic opportunity." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     min_impressions: zod_1.z.number().default(100).describe("Minimum impressions threshold"),
     max_position: zod_1.z.number().default(15).describe("Maximum position to include"),
@@ -40,7 +40,7 @@ server.tool("quick_wins", "Find keywords you're almost ranking for that could be
     };
 });
 // 2. CTR Opportunities
-server.tool("ctr_opportunities", "Find pages with high impressions but CTR significantly below expected for their position. These are title/meta description optimisation candidates." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("ctr_opportunities", "Find pages with high impressions but CTR significantly below expected for their position. These are title/meta description optimisation candidates." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     min_impressions: zod_1.z.number().default(500).describe("Minimum impressions threshold"),
 }, async ({ days, min_impressions }) => {
@@ -51,7 +51,7 @@ server.tool("ctr_opportunities", "Find pages with high impressions but CTR signi
     };
 });
 // 3. Traffic Drops
-server.tool("traffic_drops", "Find pages that lost the most traffic recently. Compares current period vs prior period and diagnoses whether each drop is a ranking loss, CTR collapse, or demand decline." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("traffic_drops", "Find pages that lost the most traffic recently. Compares current period vs prior period and diagnoses whether each drop is a ranking loss, CTR collapse, or demand decline." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days per period to compare"),
 }, async ({ days }) => {
     const results = await (0, traffic_drops_js_1.trafficDrops)(days);
@@ -61,7 +61,7 @@ server.tool("traffic_drops", "Find pages that lost the most traffic recently. Co
     };
 });
 // 4. Content Gaps
-server.tool("content_gaps", "Find topics you should create content for. Returns queries where you get impressions but rank beyond position 20, meaning there is search demand but no real content targeting it." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("content_gaps", "Find topics you should create content for. Returns queries where you get impressions but rank beyond position 20, meaning there is search demand but no real content targeting it." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(90).describe("Number of days to analyse"),
     min_impressions: zod_1.z.number().default(50).describe("Minimum impressions threshold"),
     min_position: zod_1.z.number().default(20).describe("Minimum position (queries ranking worse than this)"),
@@ -73,7 +73,7 @@ server.tool("content_gaps", "Find topics you should create content for. Returns 
     };
 });
 // 5. Site Snapshot
-server.tool("site_snapshot", "Get a quick overview of how the site is performing. Returns total clicks, impressions, CTR, and position with a comparison to the prior period." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("site_snapshot", "Get a quick overview of how the site is performing. Returns total clicks, impressions, CTR, and position with a comparison to the prior period." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days per period"),
 }, async ({ days }) => {
     const results = await (0, site_snapshot_js_1.siteSnapshot)(days);
@@ -83,7 +83,7 @@ server.tool("site_snapshot", "Get a quick overview of how the site is performing
     };
 });
 // 6. Inspect URL
-server.tool("inspect_url", "Check if a URL is indexed and why or why not. Returns indexing status, last crawl date, canonical info, robots/noindex issues, and mobile usability in one answer." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("inspect_url", "Check if a URL is indexed and why or why not. Returns indexing status, last crawl date, canonical info, robots/noindex issues, and mobile usability in one answer." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     url: zod_1.z.string().describe("The full URL to inspect"),
 }, async ({ url }) => {
     const results = await (0, inspect_url_js_1.inspectUrlTool)(url);
@@ -93,7 +93,7 @@ server.tool("inspect_url", "Check if a URL is indexed and why or why not. Return
     };
 });
 // 7. Cannibalization Check
-server.tool("cannibalization_check", "Find keywords where multiple pages from your site compete against each other. Shows which page ranks higher, the position gap, and combined impressions being split." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("cannibalization_check", "Find keywords where multiple pages from your site compete against each other. Shows which page ranks higher, the position gap, and combined impressions being split." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     min_impressions: zod_1.z.number().default(50).describe("Minimum combined impressions for a query"),
 }, async ({ days, min_impressions }) => {
@@ -104,7 +104,7 @@ server.tool("cannibalization_check", "Find keywords where multiple pages from yo
     };
 });
 // 8. Content Decay
-server.tool("content_decay", "Find pages that are slowly dying with consistent traffic decline over three consecutive 30-day periods. One bad month is noise; three consecutive bad months is a problem." + guardrails_js_1.GUARDRAIL_SUFFIX, {}, async () => {
+server.tool("content_decay", "Find pages that are slowly dying with consistent traffic decline over three consecutive 30-day periods. One bad month is noise; three consecutive bad months is a problem." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {}, async () => {
     const results = await (0, content_decay_js_1.contentDecay)();
     const wrapped = (0, guardrails_js_1.withMeta)(results, "content_decay", {});
     return {
@@ -112,7 +112,7 @@ server.tool("content_decay", "Find pages that are slowly dying with consistent t
     };
 });
 // 9. Topic Cluster Performance
-server.tool("topic_cluster_performance", "See how a group of pages performs as a whole. Aggregates clicks, impressions, CTR, and position for all pages matching a URL path pattern, plus top 5 pages and queries." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("topic_cluster_performance", "See how a group of pages performs as a whole. Aggregates clicks, impressions, CTR, and position for all pages matching a URL path pattern, plus top 5 pages and queries." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     path_pattern: zod_1.z.string().describe("URL path pattern to match (e.g. /blog/seo)"),
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
 }, async ({ path_pattern, days }) => {
@@ -123,7 +123,7 @@ server.tool("topic_cluster_performance", "See how a group of pages performs as a
     };
 });
 // 10. CTR vs Benchmark
-server.tool("ctr_vs_benchmark", "Compare your actual CTR per page against industry benchmarks by position. Flags pages significantly underperforming for their ranking position." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("ctr_vs_benchmark", "Compare your actual CTR per page against industry benchmarks by position. Flags pages significantly underperforming for their ranking position." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     min_impressions: zod_1.z.number().default(200).describe("Minimum impressions threshold"),
 }, async ({ days, min_impressions }) => {
@@ -148,7 +148,7 @@ server.tool("verify_claim", "Verify a specific numeric claim against live GSC da
     };
 });
 // 12. Advanced Search Analytics
-server.tool("advanced_search_analytics", "Run a custom search analytics query with flexible dimensions and filters. Supports country, device, query, and page filtering. For power users who need specific data cuts." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("advanced_search_analytics", "Run a custom search analytics query with flexible dimensions and filters. Supports country, device, query, and page filtering. For power users who need specific data cuts." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     dimensions: zod_1.z.array(zod_1.z.string()).default(["query"]).describe("Dimensions to group by: query, page, country, device, date"),
     filters: zod_1.z.array(zod_1.z.object({
@@ -168,7 +168,7 @@ server.tool("advanced_search_analytics", "Run a custom search analytics query wi
     };
 });
 // 13. Check Alerts
-server.tool("check_alerts", "Check for SEO alerts: position drops, CTR collapses, click losses, and pages that disappeared from search results. Returns severity-rated alerts so you know what needs attention first." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("check_alerts", "Check for SEO alerts: position drops, CTR collapses, click losses, and pages that disappeared from search results. Returns severity-rated alerts so you know what needs attention first." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(7).describe("Number of days per period to compare"),
     position_drop_threshold: zod_1.z.number().default(20).describe("Alert if position drops more than this many spots"),
     ctr_drop_threshold: zod_1.z.number().default(50).describe("Alert if CTR drops more than this percentage"),
@@ -181,7 +181,7 @@ server.tool("check_alerts", "Check for SEO alerts: position drops, CTR collapses
     };
 });
 // 14. Content Recommendations
-server.tool("content_recommendations", "Get actionable content recommendations by cross-referencing quick wins, content gaps, and cannibalisation data. Returns prioritised actions: pages to update, content to create, and pages to consolidate." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("content_recommendations", "Get actionable content recommendations by cross-referencing quick wins, content gaps, and cannibalisation data. Returns prioritised actions: pages to update, content to create, and pages to consolidate." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     max_recommendations: zod_1.z.number().default(10).describe("Maximum number of recommendations"),
 }, async ({ days, max_recommendations }) => {
@@ -192,7 +192,7 @@ server.tool("content_recommendations", "Get actionable content recommendations b
     };
 });
 // 15. Generate Report
-server.tool("generate_report", "Generate a comprehensive markdown performance report. Covers site snapshot, alerts, quick wins, traffic drops, content decay, and recommendations. Saves to disk for weekly reviews or scheduled reporting." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("generate_report", "Generate a comprehensive markdown performance report. Covers site snapshot, alerts, quick wins, traffic drops, content decay, and recommendations. Saves to disk for weekly reviews or scheduled reporting." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     output_path: zod_1.z.string().optional().describe("File path to save the report (default: ./gsc-report-{date}.md)"),
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     include_sections: zod_1.z.array(zod_1.z.string()).optional().describe("Sections: snapshot, alerts, quick_wins, traffic_drops, content_decay, recommendations"),
@@ -203,7 +203,7 @@ server.tool("generate_report", "Generate a comprehensive markdown performance re
     };
 });
 // 16. Multi-Site Dashboard
-server.tool("multi_site_dashboard", "Health check across multiple GSC properties in one view. Shows clicks, impressions, CTR, and position for each site with period comparison and health status. Agency essential." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("multi_site_dashboard", "Health check across multiple GSC properties in one view. Shows clicks, impressions, CTR, and position for each site with period comparison and health status. Agency essential." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     site_urls: zod_1.z.array(zod_1.z.string()).optional().describe("Array of GSC property URLs. Falls back to GSC_SITE_URLS env var."),
     days: zod_1.z.number().default(28).describe("Number of days per period"),
 }, async ({ site_urls, days }) => {
