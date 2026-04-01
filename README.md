@@ -193,6 +193,20 @@ Step-by-step setup with screenshots, use cases, and examples:
 
 **[suganthan.com/blog/google-search-console-mcp-server/](https://suganthan.com/blog/google-search-console-mcp-server/)**
 
+## Changelog
+
+**v2.2.0** Visual dashboard rendering. All analysis tools now produce rich, interactive visualisations in Claude Desktop with summary cards, colour coded indicators, bar charts, and tabbed sections instead of plain text output. No reinstall needed, just restart Claude Desktop.
+
+![Visual dashboard rendering in Claude Desktop](screenshots/visual-dashboard.jpg)
+
+**v2.1.0** Added Indexing API tools: submit\_url, submit\_batch, submit\_sitemap, list\_sitemaps. Request Google to crawl and index pages directly from Claude.
+
+**v2.0.0** Added OAuth authentication, advanced search analytics, check\_alerts, content\_recommendations, generate\_report, multi\_site\_dashboard, verify\_claim. Server grew from 10 to 16 tools.
+
+**v1.1.0** Added hallucination guardrails: explicit prompts in tool descriptions, data provenance metadata in responses, and verify\_claim self-checking tool. Thanks to [Krinal Mehta](https://www.linkedin.com/in/krinal/) for the feedback.
+
+**v1.0.0** Initial release with 10 analysis tools and service account authentication.
+
 ## Licence
 
 MIT
