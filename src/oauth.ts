@@ -7,6 +7,9 @@ import * as os from "os";
 const TOKEN_DIR = path.join(os.homedir(), ".gsc-mcp");
 const TOKEN_PATH = path.join(TOKEN_DIR, "oauth-token.json");
 
+// Concurrency guard: if an OAuth flow is already in progress, reuse its promise
+let activeAuthPromise: Promise<any> | null = null;
+
 function ensureTokenDir(): void {
   if (!fs.existsSync(TOKEN_DIR)) {
     fs.mkdirSync(TOKEN_DIR, { recursive: true });
@@ -150,35 +153,49 @@ async function runBrowserAuth(
   callbackPort: number,
   redirectUri: string
 ): Promise<any> {
-  const authUrl = oauth2Client.generateAuthUrl({
-    access_type: "offline",
-    scope: [
-      "https://www.googleapis.com/auth/webmasters.readonly",
-      "https://www.googleapis.com/auth/webmasters",
-    ],
-    prompt: "consent",
-  });
-
-  // Start callback server before opening browser
-  const codePromise = startLocalCallbackServer(callbackPort);
-
-  // Open browser
-  console.error(`\nOpening browser for Google authentication...\nIf the browser doesn't open, visit this URL:\n${authUrl}\n`);
-  try {
-    const open = (await import("open")).default;
-    await open(authUrl);
-  } catch {
-    console.error("Could not open browser automatically. Please visit the URL above.");
+  // If an auth flow is already running, wait for it instead of starting a second server
+  if (activeAuthPromise) {
+    console.error("OAuth flow already in progress, waiting for it to complete...");
+    return activeAuthPromise;
   }
 
-  // Wait for the code
-  const code = await codePromise;
+  activeAuthPromise = (async () => {
+    try {
+      const authUrl = oauth2Client.generateAuthUrl({
+        access_type: "offline",
+        scope: [
+          "https://www.googleapis.com/auth/webmasters.readonly",
+          "https://www.googleapis.com/auth/webmasters",
+        ],
+        prompt: "consent",
+      });
 
-  // Exchange code for tokens
-  const { tokens } = await oauth2Client.getToken(code);
-  oauth2Client.setCredentials(tokens);
-  saveCachedToken(tokens);
-  console.error("OAuth authentication successful, token cached");
+      // Start callback server before opening browser
+      const codePromise = startLocalCallbackServer(callbackPort);
 
-  return oauth2Client;
+      // Open browser
+      console.error(`\nOpening browser for Google authentication...\nIf the browser doesn't open, visit this URL:\n${authUrl}\n`);
+      try {
+        const open = (await import("open")).default;
+        await open(authUrl);
+      } catch {
+        console.error("Could not open browser automatically. Please visit the URL above.");
+      }
+
+      // Wait for the code
+      const code = await codePromise;
+
+      // Exchange code for tokens
+      const { tokens } = await oauth2Client.getToken(code);
+      oauth2Client.setCredentials(tokens);
+      saveCachedToken(tokens);
+      console.error("OAuth authentication successful, token cached");
+
+      return oauth2Client;
+    } finally {
+      activeAuthPromise = null;
+    }
+  })();
+
+  return activeAuthPromise;
 }

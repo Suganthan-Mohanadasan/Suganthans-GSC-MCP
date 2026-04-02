@@ -195,6 +195,8 @@ Step-by-step setup with screenshots, use cases, and examples:
 
 ## Changelog
 
+**v2.2.1** Fixed OAuth EADDRINUSE crash when multiple tool calls triggered concurrent authentication flows. The server now reuses the active auth session instead of spawning duplicate listeners. Thanks to [Rushabh Rathod](https://github.com/rushabhhh) for finding and reporting this.
+
 **v2.2.0** Visual dashboard rendering. All analysis tools now produce rich, interactive visualisations in Claude Desktop with summary cards, colour coded indicators, bar charts, and tabbed sections instead of plain text output. No reinstall needed, just restart Claude Desktop.
 
 ![Visual dashboard rendering in Claude Desktop](screenshots/visual-dashboard.jpg)

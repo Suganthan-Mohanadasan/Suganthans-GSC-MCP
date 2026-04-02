@@ -1,6 +1,6 @@
 {
   "name": "@anthropic-ai/gsc-mcp",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Google Search Console MCP server for Claude — answers real SEO questions, not raw API rows",
   "main": "dist/index.js",
   "bin": {
