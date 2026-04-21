@@ -1,10 +1,18 @@
 {
-  "name": "@anthropic-ai/gsc-mcp",
-  "version": "2.2.1",
-  "description": "Google Search Console MCP server for Claude — answers real SEO questions, not raw API rows",
+  "name": "suganthan-gsc-mcp",
+  "version": "2.2.2",
+  "description": "Google Search Console MCP server for Claude. 20 SEO analysis tools including quick wins, traffic drops, content decay, cannibalisation, CTR opportunities, and multi-site dashboards. OAuth and service account support.",
   "main": "dist/index.js",
   "bin": {
-    "gsc-mcp": "dist/index.js"
+    "suganthan-gsc-mcp": "dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Suganthan-Mohanadasan/Suganthans-GSC-MCP.git"
+  },
+  "homepage": "https://suganthan.com/blog/google-search-console-mcp-server/",
+  "bugs": {
+    "url": "https://github.com/Suganthan-Mohanadasan/Suganthans-GSC-MCP/issues"
   },
   "scripts": {
     "build": "tsc",
