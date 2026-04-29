@@ -84,6 +84,7 @@ async function getServiceAccountClient() {
         scopes: [
             "https://www.googleapis.com/auth/webmasters.readonly",
             "https://www.googleapis.com/auth/webmasters",
+            "https://www.googleapis.com/auth/indexing",
         ],
     });
     googleapis_1.google.options({ auth });
