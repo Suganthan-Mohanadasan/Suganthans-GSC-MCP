@@ -166,6 +166,7 @@ async function runBrowserAuth(
         scope: [
           "https://www.googleapis.com/auth/webmasters.readonly",
           "https://www.googleapis.com/auth/webmasters",
+          "https://www.googleapis.com/auth/indexing",
         ],
         prompt: "consent",
       });

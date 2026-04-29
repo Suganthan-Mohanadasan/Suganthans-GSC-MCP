@@ -61,6 +61,7 @@ async function getServiceAccountClient(): Promise<searchconsole_v1.Searchconsole
     scopes: [
       "https://www.googleapis.com/auth/webmasters.readonly",
       "https://www.googleapis.com/auth/webmasters",
+      "https://www.googleapis.com/auth/indexing",
     ],
   });
 
