@@ -166,6 +166,11 @@ async function runBrowserAuth(
         scope: [
           "https://www.googleapis.com/auth/webmasters.readonly",
           "https://www.googleapis.com/auth/webmasters",
+          // Required for the submit_url / submit_batch tools (Indexing API).
+          // Without this scope the token issued by the OAuth flow cannot call
+          // indexing.urlNotifications.publish, and submissions fail with
+          // "Insufficient Permission" even when the Indexing API is enabled.
+          "https://www.googleapis.com/auth/indexing",
         ],
         prompt: "consent",
       });
