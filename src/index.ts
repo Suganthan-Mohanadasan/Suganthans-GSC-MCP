@@ -218,7 +218,7 @@ server.tool(
 // 12. Advanced Search Analytics
 server.tool(
   "advanced_search_analytics",
-  "Run a custom search analytics query with flexible dimensions and filters. Supports country, device, query, and page filtering. For power users who need specific data cuts." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX,
+  "Run a custom search analytics query with flexible dimensions and filters. Supports country, device, query, and page filtering, plus search type (web/image/video/news/discover/googleNews). For power users who need specific data cuts." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX,
   {
     days: z.number().default(28).describe("Number of days to analyse"),
     dimensions: z.array(z.string()).default(["query"]).describe("Dimensions to group by: query, page, country, device, date"),
@@ -231,10 +231,11 @@ server.tool(
     order_by: z.string().default("clicks").describe("Sort by: clicks, impressions, ctr, position"),
     order_direction: z.string().default("descending").describe("Sort direction: ascending, descending"),
     site_url: z.string().optional().describe("Override the default site URL"),
+    search_type: z.enum(["web", "image", "video", "news", "discover", "googleNews"]).optional().describe("Filter by GSC search surface. Defaults to web. Use 'image' to query Google Images data."),
   },
-  async ({ days, dimensions, filters, row_limit, order_by, order_direction, site_url }) => {
-    const results = await advancedSearchAnalytics(days, dimensions, filters, row_limit, order_by, order_direction, site_url);
-    const wrapped = withMeta(results, "advanced_search_analytics", { days, dimensions, filters, row_limit, order_by });
+  async ({ days, dimensions, filters, row_limit, order_by, order_direction, site_url, search_type }) => {
+    const results = await advancedSearchAnalytics(days, dimensions, filters, row_limit, order_by, order_direction, site_url, search_type);
+    const wrapped = withMeta(results, "advanced_search_analytics", { days, dimensions, filters, row_limit, order_by, search_type });
     return {
       content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };

@@ -52,6 +52,9 @@ async function fetchAllRows(params, siteUrlOverride) {
                 rowLimit: pageSize,
                 startRow,
                 dataState: "all",
+                // Pass through the type filter when provided. Defaults server-side to
+                // `web` when omitted, matching prior behaviour.
+                ...(params.type ? { type: params.type } : {}),
             },
         });
         const rows = response.data.rows;

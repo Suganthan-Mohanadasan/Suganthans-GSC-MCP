@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.advancedSearchAnalytics = advancedSearchAnalytics;
 const analytics_js_1 = require("../analytics.js");
-async function advancedSearchAnalytics(days = 28, dimensions = ["query"], filters = [], rowLimit = 100, orderBy = "clicks", orderDirection = "descending", siteUrl) {
+async function advancedSearchAnalytics(days = 28, dimensions = ["query"], filters = [], rowLimit = 100, orderBy = "clicks", orderDirection = "descending", siteUrl, searchType) {
     const { startDate, endDate } = (0, analytics_js_1.getDateRange)(days);
     // Build dimension filter groups from user-provided filters
     const dimensionFilterGroups = filters.length > 0
@@ -19,6 +19,7 @@ async function advancedSearchAnalytics(days = 28, dimensions = ["query"], filter
         endDate,
         dimensions,
         dimensionFilterGroups,
+        type: searchType,
     }, siteUrl);
     // Sort
     const sortKey = orderBy;
@@ -41,5 +42,6 @@ async function advancedSearchAnalytics(days = 28, dimensions = ["query"], filter
         dimensions,
         period: { startDate, endDate },
         filtersApplied: filters,
+        searchType: searchType || "web",
     };
 }

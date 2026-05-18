@@ -146,6 +146,8 @@ This is the step that connects everything together. You're giving your robot use
 
 Nearly there. Now you tell Claude Desktop where to find the MCP server and your credentials.
 
+**Quick prerequisite: install Node.js.** The MCP server runs on Node.js, so you'll need it on your machine. Grab the LTS version from [nodejs.org](https://nodejs.org) and run the installer. That's it. You don't need to run anything yourself afterwards, Claude Desktop will use Node.js in the background to launch the MCP server via the `npx` command in the config below. You're not pasting `npx` into a terminal, you're just telling Claude Desktop's config to do it for you.
+
 **If you're using the Claude Desktop app:**
 
 1. Open Claude Desktop
@@ -159,7 +161,7 @@ Nearly there. Now you tell Claude Desktop where to find the MCP server and your 
   "mcpServers": {
     "gsc": {
       "command": "npx",
-      "args": ["-y", "gsc-mcp-server"],
+      "args": ["-y", "suganthan-gsc-mcp"],
       "env": {
         "GSC_KEY_FILE": "/path/to/your/gsc-key.json",
         "GSC_SITE_URL": "sc-domain:yourdomain.com"
@@ -179,20 +181,20 @@ Replace `/path/to/your/gsc-key.json` with the actual path to the JSON file you d
 One command:
 
 ```bash
-claude mcp add gsc -- npx -y gsc-mcp-server
+claude mcp add gsc -- npx -y suganthan-gsc-mcp
 ```
 
 Then set the environment variables in your config.
 
-### The gotcha that will catch you
+### Keep an eye out for this
 
-I guarantee this will trip someone up, so I'm putting it in bold.
+A few things that have tripped people up. Worth a sixty second read before you hit save.
 
-**If your Search Console property is a Domain property** (which most are), your `GSC_SITE_URL` must be formatted as `sc-domain:yourdomain.com`, not `https://yourdomain.com/`.
+**The Domain property URL format.** If your Search Console property is a Domain property (which most are), your `GSC_SITE_URL` must be formatted as `sc-domain:yourdomain.com`, not `https://yourdomain.com/`. You can check which type you have by looking at your property selector in Search Console. If it shows just the domain name without `https://`, it's a Domain property. I made this exact mistake during setup. Everything looked correct but nothing worked until I changed the URL format.
 
-You can check which type you have by looking at your property selector in Search Console. If it shows just the domain name without `https://`, it's a Domain property.
+**"The email address wasn't found" when you try to add the service account in Step 5.** Almost always one of two things. Either there's a trailing whitespace when you copied the `client_email` from the JSON (re-copy it carefully), or you haven't enabled the Google Search Console API in the same Google Cloud project where the service account lives (back to Step 2). Either fixes it instantly.
 
-I made this exact mistake during setup. Everything looked correct but nothing worked until I changed the URL format. Save yourself fifteen minutes of confused troubleshooting.
+**A stray `preferences` block in your Claude Desktop config.** The config file should only contain `mcpServers` at the root level. If you've copied a config from somewhere with a `preferences` object at the bottom (with keys like `coworkScheduledTasksEnabled`, `sidebarMode`, and so on), strip it out. Those settings belong to a different app and Claude Desktop will throw a config error on reload.
 
 ## Taking it for a spin
 
@@ -282,4 +284,4 @@ Just your data, answering your questions, in plain English.
 
 ---
 
-*The GSC MCP server is open source and available on [GitHub](https://github.com/anthropics/gsc-mcp-server). If you find it useful, give it a star. If something breaks, open an issue.*
+*The GSC MCP server is open source and available on [GitHub](https://github.com/Suganthan-Mohanadasan/Suganthans-GSC-MCP). If you find it useful, give it a star. If something breaks, open an issue.*

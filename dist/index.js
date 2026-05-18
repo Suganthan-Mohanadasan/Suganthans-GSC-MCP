@@ -148,7 +148,7 @@ server.tool("verify_claim", "Verify a specific numeric claim against live GSC da
     };
 });
 // 12. Advanced Search Analytics
-server.tool("advanced_search_analytics", "Run a custom search analytics query with flexible dimensions and filters. Supports country, device, query, and page filtering. For power users who need specific data cuts." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
+server.tool("advanced_search_analytics", "Run a custom search analytics query with flexible dimensions and filters. Supports country, device, query, and page filtering, plus search type (web/image/video/news/discover/googleNews). For power users who need specific data cuts." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     dimensions: zod_1.z.array(zod_1.z.string()).default(["query"]).describe("Dimensions to group by: query, page, country, device, date"),
     filters: zod_1.z.array(zod_1.z.object({
@@ -160,9 +160,10 @@ server.tool("advanced_search_analytics", "Run a custom search analytics query wi
     order_by: zod_1.z.string().default("clicks").describe("Sort by: clicks, impressions, ctr, position"),
     order_direction: zod_1.z.string().default("descending").describe("Sort direction: ascending, descending"),
     site_url: zod_1.z.string().optional().describe("Override the default site URL"),
-}, async ({ days, dimensions, filters, row_limit, order_by, order_direction, site_url }) => {
-    const results = await (0, advanced_search_analytics_js_1.advancedSearchAnalytics)(days, dimensions, filters, row_limit, order_by, order_direction, site_url);
-    const wrapped = (0, guardrails_js_1.withMeta)(results, "advanced_search_analytics", { days, dimensions, filters, row_limit, order_by });
+    search_type: zod_1.z.enum(["web", "image", "video", "news", "discover", "googleNews"]).optional().describe("Filter by GSC search surface. Defaults to web. Use 'image' to query Google Images data."),
+}, async ({ days, dimensions, filters, row_limit, order_by, order_direction, site_url, search_type }) => {
+    const results = await (0, advanced_search_analytics_js_1.advancedSearchAnalytics)(days, dimensions, filters, row_limit, order_by, order_direction, site_url, search_type);
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "advanced_search_analytics", { days, dimensions, filters, row_limit, order_by, search_type });
     return {
         content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };
