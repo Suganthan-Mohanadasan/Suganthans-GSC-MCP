@@ -23,9 +23,17 @@ const generate_report_js_1 = require("./tools/generate-report.js");
 const multi_site_dashboard_js_1 = require("./tools/multi-site-dashboard.js");
 const submit_url_js_1 = require("./tools/submit-url.js");
 const submit_sitemap_js_1 = require("./tools/submit-sitemap.js");
+// v2.3 image SEO tools — paired with the Image SEO post on suganthan.com.
+const image_keyword_overview_js_1 = require("./tools/image-keyword-overview.js");
+const image_search_quick_wins_js_1 = require("./tools/image-search-quick-wins.js");
+const compare_web_vs_image_js_1 = require("./tools/compare-web-vs-image.js");
+const image_pages_overview_js_1 = require("./tools/image-pages-overview.js");
+const image_keyword_trends_js_1 = require("./tools/image-keyword-trends.js");
+const image_impressions_no_clicks_js_1 = require("./tools/image-impressions-no-clicks.js");
+const image_content_decay_js_1 = require("./tools/image-content-decay.js");
 const server = new mcp_js_1.McpServer({
     name: "gsc-mcp",
-    version: "2.1.0",
+    version: "2.3.0",
 });
 // 1. Quick Wins
 server.tool("quick_wins", "Find keywords you're almost ranking for that could be pushed to page one. Returns queries at positions 4-15 with high impressions, sorted by traffic opportunity." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
@@ -251,10 +259,104 @@ server.tool("list_sitemaps", "List all sitemaps submitted for the site, with sta
         content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };
 });
+// ---------------------------------------------------------------------------
+// v2.3 IMAGE SEO TOOLS
+//
+// These tools all pass type=image to the GSC Search Analytics API, which most
+// third-party tools never expose. Paired with the Image SEO technical guide
+// on suganthan.com (link in README). All 7 reuse the existing fetchAllRows
+// plumbing; the only meaningfully new logic is the join in compare_web_vs_image.
+// ---------------------------------------------------------------------------
+// 21. Image Keyword Overview
+server.tool("image_keyword_overview", "Top image-search keywords for the site, sorted by impressions, clicks, or position. Filtered to type=image so it returns only what surfaces in Google Images, not web search." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
+    days: zod_1.z.number().default(90).describe("Number of days to analyse (image search is lower volume, default 90)"),
+    min_impressions: zod_1.z.number().default(50).describe("Minimum impressions threshold"),
+    row_limit: zod_1.z.number().default(50).describe("Maximum rows to return"),
+    order_by: zod_1.z.enum(["impressions", "clicks", "position"]).default("impressions").describe("Sort field"),
+}, async ({ days, min_impressions, row_limit, order_by }) => {
+    const results = await (0, image_keyword_overview_js_1.imageKeywordOverview)(days, min_impressions, row_limit, order_by);
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "image_keyword_overview", { days, min_impressions, row_limit, order_by });
+    return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+});
+// 22. Image Search Quick Wins
+server.tool("image_search_quick_wins", "Find image-search queries ranking at positions 4-15 with high impressions, sorted by estimated traffic gain if they reach position 3. Uses an image-search CTR baseline calibrated to the lower CTRs typical of Google Images." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
+    days: zod_1.z.number().default(90).describe("Number of days to analyse"),
+    min_impressions: zod_1.z.number().default(500).describe("Minimum impressions threshold"),
+    max_position: zod_1.z.number().default(15).describe("Maximum position to include"),
+}, async ({ days, min_impressions, max_position }) => {
+    const results = await (0, image_search_quick_wins_js_1.imageSearchQuickWins)(days, min_impressions, max_position);
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "image_search_quick_wins", { days, min_impressions, max_position });
+    return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+});
+// 23. Compare Web vs Image
+server.tool("compare_web_vs_image", "For each query, returns side-by-side performance across web and image search. Two GSC API calls joined on query, with an impressions ratio that surfaces where image search carries disproportionate volume relative to web." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
+    days: zod_1.z.number().default(90).describe("Number of days to analyse"),
+    min_combined_impressions: zod_1.z.number().default(100).describe("Minimum combined (web + image) impressions to include the query"),
+    row_limit: zod_1.z.number().default(50).describe("Maximum rows to return"),
+}, async ({ days, min_combined_impressions, row_limit }) => {
+    const results = await (0, compare_web_vs_image_js_1.compareWebVsImage)(days, min_combined_impressions, row_limit);
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "compare_web_vs_image", { days, min_combined_impressions, row_limit });
+    return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+});
+// 24. Image Pages Overview
+server.tool("image_pages_overview", "Pages on the site ranked by image-search performance. Tells you which pages are actually surfacing in Google Images and which are not. Pairs with image_keyword_overview to map ranking queries back to the pages carrying them." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
+    days: zod_1.z.number().default(90).describe("Number of days to analyse"),
+    min_impressions: zod_1.z.number().default(100).describe("Minimum impressions threshold"),
+    row_limit: zod_1.z.number().default(50).describe("Maximum rows to return"),
+    order_by: zod_1.z.enum(["impressions", "clicks", "position"]).default("clicks").describe("Sort field"),
+}, async ({ days, min_impressions, row_limit, order_by }) => {
+    const results = await (0, image_pages_overview_js_1.imagePagesOverview)(days, min_impressions, row_limit, order_by);
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "image_pages_overview", { days, min_impressions, row_limit, order_by });
+    return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+});
+// 25. Image Keyword Trends
+server.tool("image_keyword_trends", "Period-over-period trend for image-search queries. Two equal-length windows joined on query, with impressions and position deltas. Negative position delta means the query improved its average rank." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
+    days: zod_1.z.number().default(28).describe("Length in days of each comparison window (current + prior)"),
+    min_combined_impressions: zod_1.z.number().default(100).describe("Minimum combined impressions across both windows"),
+    row_limit: zod_1.z.number().default(50).describe("Maximum rows to return"),
+    order_by: zod_1.z.enum(["impressions_delta", "position_delta"]).default("impressions_delta").describe("Sort field"),
+}, async ({ days, min_combined_impressions, row_limit, order_by }) => {
+    const results = await (0, image_keyword_trends_js_1.imageKeywordTrends)(days, min_combined_impressions, row_limit, order_by);
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "image_keyword_trends", { days, min_combined_impressions, row_limit, order_by });
+    return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+});
+// 26. Image Impressions No Clicks
+server.tool("image_impressions_no_clicks", "Surfaces query and page pairs that earn meaningful image-search impressions but effectively zero clicks. The textbook 'thumbnail is not converting' pattern. Defaults tuned for image search, which runs at much higher impression volumes per page than web." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
+    days: zod_1.z.number().default(90).describe("Number of days to analyse"),
+    min_impressions: zod_1.z.number().default(500).describe("Minimum impressions threshold"),
+    max_clicks: zod_1.z.number().default(2).describe("Maximum clicks (filter to pages stuck in the impressions-no-clicks pattern)"),
+    row_limit: zod_1.z.number().default(50).describe("Maximum rows to return"),
+}, async ({ days, min_impressions, max_clicks, row_limit }) => {
+    const results = await (0, image_impressions_no_clicks_js_1.imageImpressionsNoClicks)(days, min_impressions, max_clicks, row_limit);
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "image_impressions_no_clicks", { days, min_impressions, max_clicks, row_limit });
+    return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+});
+// 27. Image Content Decay
+server.tool("image_content_decay", "Image-search version of content_decay. Three 30-day windows, flags pages with a consistent decline across all three. Defaults to a lower minimum click threshold than the web equivalent because image search produces lower click volumes overall." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
+    min_period3_clicks: zod_1.z.number().default(5).describe("Minimum image-search clicks in the oldest 30-day window required for a page to be considered"),
+}, async ({ min_period3_clicks }) => {
+    const results = await (0, image_content_decay_js_1.imageContentDecay)(min_period3_clicks);
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "image_content_decay", { min_period3_clicks });
+    return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+});
 async function main() {
     const transport = new stdio_js_1.StdioServerTransport();
     await server.connect(transport);
-    console.error("GSC MCP server v2.1.0 running on stdio");
+    console.error("GSC MCP server v2.3.0 running on stdio");
 }
 main().catch((error) => {
     console.error("Fatal error:", error);
