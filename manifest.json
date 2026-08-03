@@ -1,0 +1,59 @@
+{
+  "manifest_version": "0.2",
+  "name": "suganthan-gsc-mcp",
+  "display_name": "Suganthan's GSC MCP",
+  "version": "2.3.0",
+  "description": "Ask Claude real questions about your Google Search Console data. 27 SEO analysis tools, local and private.",
+  "long_description": "A Google Search Console MCP server that answers questions, not API rows: quick win keywords, traffic drops, content decay, cannibalisation, CTR benchmarks, multi site dashboards, and a full image search suite. Free and open source. Runs entirely on your machine: your data goes straight from this computer to Google and nothing passes through anyone else's servers.",
+  "author": {
+    "name": "Suganthan Mohanadasan",
+    "email": "sugan@suganthan.com",
+    "url": "https://suganthan.com"
+  },
+  "homepage": "https://suganthan.com/blog/google-search-console-mcp-server/",
+  "documentation": "https://github.com/Suganthan-Mohanadasan/Suganthans-GSC-MCP#readme",
+  "support": "https://github.com/Suganthan-Mohanadasan/Suganthans-GSC-MCP/issues",
+  "license": "Apache-2.0",
+  "keywords": ["seo", "google-search-console", "gsc", "search-analytics", "image-seo"],
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/index.js"],
+      "env": {
+        "GSC_AUTH_MODE": "oauth",
+        "GSC_SCOPES": "${user_config.access_level}",
+        "GSC_SITE_URL": "${user_config.site_url}",
+        "GSC_OAUTH_SECRETS_FILE": "${user_config.secrets_file}"
+      }
+    }
+  },
+  "user_config": {
+    "site_url": {
+      "type": "string",
+      "title": "Default Search Console property",
+      "description": "For example sc-domain:yoursite.com or https://www.yoursite.com/",
+      "required": true
+    },
+    "access_level": {
+      "type": "string",
+      "title": "Access level",
+      "description": "readonly (recommended) or full. Full adds sitemap and URL submission tools.",
+      "default": "readonly",
+      "required": false
+    },
+    "secrets_file": {
+      "type": "file",
+      "title": "Google OAuth client secrets JSON",
+      "description": "Path to your OAuth client secrets file. Needed until built in Google sign in ships; see the README quick start.",
+      "required": false
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=18"
+    }
+  }
+}

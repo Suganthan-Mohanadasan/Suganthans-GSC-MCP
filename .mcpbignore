@@ -1,0 +1,21 @@
+# Keep the desktop bundle to runtime files only:
+# dist/, production node_modules, package.json, manifest.json, LICENSE, NOTICE
+src/
+screenshots/
+demo-mock/
+docs/
+article.md
+README-v2.3-DRAFT.md
+gsc-mcp-build-spec.md
+probe-platform-properties.mjs
+tsconfig.json
+package-lock.json
+.gitignore
+.git/
+*.mcpb
+
+# dev dependencies (not needed at runtime)
+node_modules/typescript/
+node_modules/@types/
+node_modules/.bin/
+node_modules/.package-lock.json

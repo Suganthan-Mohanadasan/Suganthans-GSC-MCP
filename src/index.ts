@@ -519,6 +519,17 @@ server.tool(
 );
 
 async function main() {
+  const cmd = process.argv[2];
+  if (cmd === "setup") {
+    const { runSetup } = await import("./setup.js");
+    const code = await runSetup(process.argv.slice(3));
+    process.exit(code);
+  }
+  if (cmd === "--version" || cmd === "-v") {
+    console.log("2.3.0");
+    process.exit(0);
+  }
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("GSC MCP server v2.3.0 running on stdio");

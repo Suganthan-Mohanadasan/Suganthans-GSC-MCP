@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.submitSitemap = submitSitemap;
 exports.listSitemaps = listSitemaps;
 const auth_js_1 = require("../auth.js");
+const oauth_js_1 = require("../oauth.js");
 /**
  * Google's Sitemaps API does not support sc-domain: properties via service accounts.
  * This converts domain properties to URL-prefix format for sitemaps calls only.
@@ -23,6 +24,15 @@ function getSitemapSiteUrlFallback(siteUrl) {
     return null;
 }
 async function submitSitemap(sitemapUrl) {
+    if ((0, auth_js_1.getAuthMode)() === "oauth" && (0, oauth_js_1.getScopeTier)() === "readonly") {
+        return {
+            siteUrl: "",
+            sitemapUrl: sitemapUrl || "",
+            success: false,
+            error: "Sitemap submission needs full access, but this install is in read only mode (GSC_SCOPES=readonly). " +
+                "Re-run `npx suganthan-gsc-mcp setup --reauth` and choose full access, then try again.",
+        };
+    }
     const client = await (0, auth_js_1.getSearchConsoleClient)();
     const { siteUrl: configSiteUrl } = (0, auth_js_1.getConfig)();
     const sitemapSiteUrl = getSitemapSiteUrl(configSiteUrl);

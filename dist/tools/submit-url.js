@@ -41,6 +41,10 @@ const oauth_js_1 = require("../oauth.js");
 const fs = __importStar(require("fs"));
 async function getIndexingClient() {
     const mode = (0, auth_js_1.getAuthMode)();
+    if (mode === "oauth" && (0, oauth_js_1.getScopeTier)() === "readonly") {
+        throw new Error("URL submission needs full access, but this install is in read only mode (GSC_SCOPES=readonly). " +
+            "Re-run `npx suganthan-gsc-mcp setup --reauth` and choose full access, then try again.");
+    }
     if (mode === "oauth") {
         const oauth2Client = await (0, oauth_js_1.authenticateWithOAuth)();
         googleapis_1.google.options({ auth: oauth2Client });

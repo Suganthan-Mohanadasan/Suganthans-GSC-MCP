@@ -33,6 +33,10 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getScopeTier = getScopeTier;
+exports.scopesForTier = scopesForTier;
+exports.clearCachedToken = clearCachedToken;
+exports.tokenPath = tokenPath;
 exports.loadCachedToken = loadCachedToken;
 exports.saveCachedToken = saveCachedToken;
 exports.getOAuthConfig = getOAuthConfig;
@@ -42,8 +46,44 @@ const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const http = __importStar(require("http"));
 const os = __importStar(require("os"));
+const embedded_client_js_1 = require("./embedded-client.js");
 const TOKEN_DIR = path.join(os.homedir(), ".gsc-mcp");
 const TOKEN_PATH = path.join(TOKEN_DIR, "oauth-token.json");
+/**
+ * GSC_SCOPES=readonly requests only webmasters.readonly, which keeps the
+ * Google consent screen to a single read-only permission. The default is
+ * "full" (read + sitemap submission + Indexing API) so existing installs
+ * keep working exactly as before this option existed.
+ */
+function getScopeTier() {
+    return process.env.GSC_SCOPES?.toLowerCase() === "readonly" ? "readonly" : "full";
+}
+function scopesForTier(tier) {
+    if (tier === "readonly") {
+        return ["https://www.googleapis.com/auth/webmasters.readonly"];
+    }
+    return [
+        "https://www.googleapis.com/auth/webmasters.readonly",
+        "https://www.googleapis.com/auth/webmasters",
+        // Required for the submit_url / submit_batch tools (Indexing API).
+        // Without this scope the token issued by the OAuth flow cannot call
+        // indexing.urlNotifications.publish, and submissions fail with
+        // "Insufficient Permission" even when the Indexing API is enabled.
+        "https://www.googleapis.com/auth/indexing",
+    ];
+}
+function clearCachedToken() {
+    try {
+        if (fs.existsSync(TOKEN_PATH))
+            fs.unlinkSync(TOKEN_PATH);
+    }
+    catch {
+        // best effort
+    }
+}
+function tokenPath() {
+    return TOKEN_PATH;
+}
 // Concurrency guard: if an OAuth flow is already in progress, reuse its promise
 let activeAuthPromise = null;
 function ensureTokenDir() {
@@ -86,8 +126,28 @@ function getOAuthConfig() {
             };
         }
     }
-    throw new Error("OAuth credentials not found. Set GSC_OAUTH_CLIENT_ID and GSC_OAUTH_CLIENT_SECRET, " +
+    // Option 3: the embedded public client (see embedded-client.ts)
+    if ((0, embedded_client_js_1.embeddedClientAvailable)()) {
+        return { clientId: embedded_client_js_1.EMBEDDED_CLIENT_ID, clientSecret: embedded_client_js_1.EMBEDDED_CLIENT_SECRET };
+    }
+    throw new Error("OAuth credentials not found. Run `npx suganthan-gsc-mcp setup` for guided configuration, " +
+        "or set GSC_OAUTH_CLIENT_ID and GSC_OAUTH_CLIENT_SECRET, " +
         "or set GSC_OAUTH_SECRETS_FILE to a Google OAuth client secrets JSON file.");
+}
+/**
+ * True when the cached token was granted every scope the current tier needs.
+ * A token minted in read-only mode cannot call write APIs, so switching
+ * GSC_SCOPES to "full" must trigger a fresh consent rather than a silent 403.
+ */
+function cachedTokenCoversScopes(cachedToken) {
+    const needed = scopesForTier(getScopeTier());
+    const granted = typeof cachedToken?.scope === "string" ? cachedToken.scope.split(" ") : [];
+    if (granted.length === 0) {
+        // Tokens cached before v2.3 carried no scope field; they were always
+        // granted the full set, so treat them as covering everything.
+        return true;
+    }
+    return needed.every((s) => granted.includes(s));
 }
 /**
  * Starts a one-shot local HTTP server to capture the OAuth redirect.
@@ -138,6 +198,10 @@ async function authenticateWithOAuth() {
     const oauth2Client = new googleapis_1.google.auth.OAuth2(clientId, clientSecret, redirectUri);
     // Check for cached token
     const cachedToken = loadCachedToken();
+    if (cachedToken && !cachedTokenCoversScopes(cachedToken)) {
+        console.error("Cached token is missing scopes the current GSC_SCOPES tier needs, re-authenticating...");
+        return await runBrowserAuth(oauth2Client, callbackPort, redirectUri);
+    }
     if (cachedToken) {
         oauth2Client.setCredentials(cachedToken);
         // Check if token needs refresh
@@ -170,15 +234,7 @@ async function runBrowserAuth(oauth2Client, callbackPort, redirectUri) {
         try {
             const authUrl = oauth2Client.generateAuthUrl({
                 access_type: "offline",
-                scope: [
-                    "https://www.googleapis.com/auth/webmasters.readonly",
-                    "https://www.googleapis.com/auth/webmasters",
-                    // Required for the submit_url / submit_batch tools (Indexing API).
-                    // Without this scope the token issued by the OAuth flow cannot call
-                    // indexing.urlNotifications.publish, and submissions fail with
-                    // "Insufficient Permission" even when the Indexing API is enabled.
-                    "https://www.googleapis.com/auth/indexing",
-                ],
+                scope: scopesForTier(getScopeTier()),
                 prompt: "consent",
             });
             // Start callback server before opening browser
