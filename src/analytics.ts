@@ -20,6 +20,9 @@ export interface QueryParams {
     }>;
   }>;
   rowLimit?: number;
+  // GSC Search Analytics `type` filter. Values: web (default), image, video,
+  // news, discover, googleNews. Added in v2.3 to unlock image-search data.
+  type?: "web" | "image" | "video" | "news" | "discover" | "googleNews";
 }
 
 function formatDate(date: Date): string {
@@ -76,6 +79,9 @@ export async function fetchAllRows(params: QueryParams, siteUrlOverride?: string
         rowLimit: pageSize,
         startRow,
         dataState: "all",
+        // Pass through the type filter when provided. Defaults server-side to
+        // `web` when omitted, matching prior behaviour.
+        ...(params.type ? { type: params.type } : {}),
       },
     });
 

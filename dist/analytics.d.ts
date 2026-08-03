@@ -17,6 +17,7 @@ export interface QueryParams {
         }>;
     }>;
     rowLimit?: number;
+    type?: "web" | "image" | "video" | "news" | "discover" | "googleNews";
 }
 export declare function getDateRange(days: number): {
     startDate: string;
