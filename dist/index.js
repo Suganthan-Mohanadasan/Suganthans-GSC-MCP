@@ -31,9 +31,13 @@ const image_pages_overview_js_1 = require("./tools/image-pages-overview.js");
 const image_keyword_trends_js_1 = require("./tools/image-keyword-trends.js");
 const image_impressions_no_clicks_js_1 = require("./tools/image-impressions-no-clicks.js");
 const image_content_decay_js_1 = require("./tools/image-content-decay.js");
+// v2.4 generative AI tools — the Generative AI report has no API, but AI Mode
+// conversation exhaust leaks into the regular query dimension. See the tool
+// file for the mechanism and sources.
+const genai_conversation_queries_js_1 = require("./tools/genai-conversation-queries.js");
 const server = new mcp_js_1.McpServer({
     name: "gsc-mcp",
-    version: "2.3.0",
+    version: "2.4.0",
 });
 // 1. Quick Wins
 server.tool("quick_wins", "Find keywords you're almost ranking for that could be pushed to page one. Returns queries at positions 4-15 with high impressions, sorted by traffic opportunity." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
@@ -353,6 +357,20 @@ server.tool("image_content_decay", "Image-search version of content_decay. Three
         content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };
 });
+// 28. Generative AI Conversation Queries
+server.tool("genai_conversation_queries", "Surface AI-conversation exhaust hiding in your regular query data: bare replies to Google's AI ('yes', 'go on'), 'what about X' pivot follow-ups, conversational questions, AI-visibility tracker probes, and full agent prompts logged as queries. Google counts every AI Mode follow-up as a new query and folds AI Mode/AI Overviews into the web search type, so these fragments carry real impressions, positions and clicks. The dedicated Generative AI report has no query dimension; this is the only query-level AI evidence available anywhere. Classifies every match into seven buckets with landing pages, plus a monthly timeline showing when reply-artefacts first appeared on your site. Treat probe and harness buckets as machine traffic, not demand." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
+    days: zod_1.z.number().default(480).describe("Days to analyse (default 480, the full 16 months GSC retains)"),
+    min_impressions: zod_1.z.number().default(1).describe("Minimum impressions for a query to be listed (single-impression rows are evidence, not noise, so the default keeps them)"),
+    max_rows_per_bucket: zod_1.z.number().default(50).describe("Maximum rows returned per bucket; totals always cover everything"),
+    include_timeline: zod_1.z.boolean().default(true).describe("Include the monthly artefact timeline (one extra API call)"),
+    site_url: zod_1.z.string().optional().describe("Override the configured property (e.g. sc-domain:example.com)"),
+}, async ({ days, min_impressions, max_rows_per_bucket, include_timeline, site_url }) => {
+    const results = await (0, genai_conversation_queries_js_1.genaiConversationQueries)(days, min_impressions, max_rows_per_bucket, include_timeline, site_url);
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "genai_conversation_queries", { days, min_impressions, max_rows_per_bucket, include_timeline, site_url });
+    return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+});
 async function main() {
     const cmd = process.argv[2];
     if (cmd === "setup") {
@@ -361,12 +379,12 @@ async function main() {
         process.exit(code);
     }
     if (cmd === "--version" || cmd === "-v") {
-        console.log("2.3.0");
+        console.log("2.4.0");
         process.exit(0);
     }
     const transport = new stdio_js_1.StdioServerTransport();
     await server.connect(transport);
-    console.error("GSC MCP server v2.3.0 running on stdio");
+    console.error("GSC MCP server v2.4.0 running on stdio");
 }
 main().catch((error) => {
     console.error("Fatal error:", error);

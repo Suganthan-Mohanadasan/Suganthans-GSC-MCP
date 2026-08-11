@@ -2,7 +2,7 @@
 
 An MCP server for Google Search Console that lets you ask Claude questions about your search data and get real answers. Not raw API rows. Actual analysis.
 
-27 tools. OAuth or service account. Free and open source. Runs on your machine: your data goes straight from this computer to Google, and nothing passes through anyone else's servers.
+28 tools. OAuth or service account. Free and open source. Runs on your machine: your data goes straight from this computer to Google, and nothing passes through anyone else's servers.
 
 > **Full setup guide with screenshots:** [suganthan.com/blog/google-search-console-mcp-server/](https://suganthan.com/blog/google-search-console-mcp-server/)
 
@@ -125,6 +125,14 @@ First use opens a browser for Google sign in. Token is cached after that (locall
 }
 ```
 
+### Generative AI (v2.4)
+
+Google's Generative AI performance report has no API, no BigQuery export, and no searchAppearance value. But Google counts every AI Mode follow-up as a brand-new query and folds AI Mode and AI Overviews into the web search type, so AI-conversation exhaust leaks into the regular query dimension with real impressions, positions and clicks. This tool mines it.
+
+| Tool | What it answers |
+|---|---|
+| `genai_conversation_queries` | Which of your queries are actually AI-conversation exhaust: bare replies to the AI ("yes", "go on"), "what about X" pivot follow-ups, conversational questions, AI-visibility tracker probes, and full agent prompts logged as queries. Seven classified buckets with landing pages, plus a monthly timeline showing when reply-artefacts first appeared on your property |
+
 ### Indexing API (optional)
 
 To use `submit_url`, `submit_batch`, and `submit_sitemap`:
@@ -145,7 +153,7 @@ For multiple properties, add `GSC_SITE_URLS`:
 }
 ```
 
-## All 27 tools
+## All 28 tools
 
 ### Analysis
 
