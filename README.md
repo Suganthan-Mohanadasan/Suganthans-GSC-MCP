@@ -6,7 +6,13 @@ An MCP server for Google Search Console that lets you ask Claude questions about
 
 > **Full setup guide with screenshots:** [suganthan.com/blog/google-search-console-mcp-server/](https://suganthan.com/blog/google-search-console-mcp-server/)
 
+> **v2.4.0 update (August 2026):** new tool `genai_conversation_queries` finds the AI conversations leaking into your query report. People reply to Google's AI with things like "yes, go on", Google logs every follow-up as a new query, and this tool sorts all of it into seven classified buckets with landing pages and a monthly timeline. Full method and findings: ["Yes, Go On": The AI Conversations Leaking Into Your Search Console](https://suganthan.com/blog/ai-mode-queries-search-console/).
+
 ## See it in action
+
+**"Which of my queries are actually AI conversations?"**
+
+![Reply artefacts like yes and sure classified with impressions, clicks and landing pages](screenshots/genai-conversation-queries.jpg)
 
 **"How is my site doing?"**
 
@@ -240,6 +246,8 @@ Step-by-step setup with screenshots, use cases, and examples:
 ## Changelog
 
 **v2.4.0** Generative AI conversation queries. `genai_conversation_queries` finds the AI conversation fragments hiding in your regular query data and sorts them into seven kinds: reply artefacts ("yes", "go on"), pivot follow-ups ("what about resend?"), conversational questions, tracker probes, agent harnesses, pasted strings, and a review pile. Google counts every AI Mode follow-up as a brand new query, so these rows carry real impressions, positions and clicks, and the dedicated Generative AI report has no query view, which makes this the only query-level AI evidence available anywhere. One call classifies sixteen months of your queries, attaches landing pages via query and page grouping, and returns a monthly reply-artefact timeline. Plain Search Analytics API, no BigQuery, no new permissions. Full method and findings: [the launch post](https://suganthan.com/blog/ai-mode-queries-search-console/). Sparked by [Anastasia Kourou surfacing the queries](https://www.linkedin.com/posts/anastasia-kourou-4b393034_hi-john-mueller-i-am-noticing-some-unusual-share-7489988919229353984-FJ0m/) with John Mueller confirming the mechanism, and by [Ross Tavendale asking](https://x.com/rtavs/status/2084710985298780579) how to reverse engineer it.
+
+![Reply artefact queries classified by the new tool](screenshots/genai-conversation-queries.jpg)
 
 **v2.3.0** Image SEO suite and one command setup. 7 new tools that pass `type=image` to the GSC Search Analytics API, plus a `type` parameter on `advanced_search_analytics` covering all 6 GSC search surfaces (web, image, video, news, discover, googleNews). The image-search surface was invisible to most third-party SEO tools because they default to `type=web` and never expose the others; v2.3 makes it queryable end-to-end. Also new: `npx suganthan-gsc-mcp setup`, a wizard that signs you in, verifies the connection with a live call, and writes your Claude Desktop and Claude Code configs; a read only scope tier (`GSC_SCOPES=readonly`, now the setup default) so the standard consent asks for one view permission; and a one click Claude Desktop bundle (`.mcpb`) on the releases page.
 
