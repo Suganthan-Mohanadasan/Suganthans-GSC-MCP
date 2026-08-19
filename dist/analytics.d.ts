@@ -39,6 +39,23 @@ export interface QueryParams {
  * Throws a descriptive error instead of letting the API return a generic 400.
  */
 export declare function assertValidDimensions(searchType: SearchType, dimensions: string[]): void;
+/** Devices as the API spells them in dimension filters. */
+export declare const DEVICES: readonly ["MOBILE", "DESKTOP", "TABLET"];
+export type Device = (typeof DEVICES)[number];
+/**
+ * Dimension filters for device and country.
+ *
+ * Both are optional, and unset means unfiltered - every tool keeps returning
+ * all devices and all countries unless asked otherwise.
+ *
+ * Discover has no device dimension (see ALLOWED_DIMENSIONS), so filtering by
+ * device there is impossible rather than merely empty. That fails loudly.
+ */
+export declare function deviceCountryFilters(device?: string, country?: string, searchType?: SearchType): Array<{
+    dimension: string;
+    operator: string;
+    expression: string;
+}>;
 export declare function getDateRange(days: number): {
     startDate: string;
     endDate: string;

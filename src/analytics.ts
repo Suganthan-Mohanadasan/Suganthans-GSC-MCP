@@ -69,6 +69,53 @@ export function assertValidDimensions(searchType: SearchType, dimensions: string
   }
 }
 
+/** Devices as the API spells them in dimension filters. */
+export const DEVICES = ["MOBILE", "DESKTOP", "TABLET"] as const;
+export type Device = (typeof DEVICES)[number];
+
+/**
+ * Dimension filters for device and country.
+ *
+ * Both are optional, and unset means unfiltered - every tool keeps returning
+ * all devices and all countries unless asked otherwise.
+ *
+ * Discover has no device dimension (see ALLOWED_DIMENSIONS), so filtering by
+ * device there is impossible rather than merely empty. That fails loudly.
+ */
+export function deviceCountryFilters(
+  device?: string,
+  country?: string,
+  searchType: SearchType = "web"
+): Array<{ dimension: string; operator: string; expression: string }> {
+  const filters: Array<{ dimension: string; operator: string; expression: string }> = [];
+
+  if (device) {
+    if (!ALLOWED_DIMENSIONS[searchType].includes("device")) {
+      throw new Error(
+        `searchType "${searchType}" has no device dimension, so it cannot be filtered by device. ` +
+          `Allowed dimensions: [${ALLOWED_DIMENSIONS[searchType].join(", ")}].`
+      );
+    }
+    const upper = device.toUpperCase() as Device;
+    if (!DEVICES.includes(upper)) {
+      throw new Error(`Unknown device "${device}". Allowed: ${DEVICES.join(", ")}.`);
+    }
+    filters.push({ dimension: "device", operator: "equals", expression: upper });
+  }
+
+  if (country) {
+    const lower = country.toLowerCase();
+    if (!/^[a-z]{3}$/.test(lower)) {
+      throw new Error(
+        `Country must be an ISO-3166-1 alpha-3 code such as deu, aut, che or usa - got "${country}".`
+      );
+    }
+    filters.push({ dimension: "country", operator: "equals", expression: lower });
+  }
+
+  return filters;
+}
+
 function formatDate(date: Date): string {
   return date.toISOString().split("T")[0];
 }

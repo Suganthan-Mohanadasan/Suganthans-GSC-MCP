@@ -5,6 +5,7 @@ import {
   SearchType,
   assertValidDimensions,
   QueryParams,
+  deviceCountryFilters,
 } from "../analytics.js";
 
 /**
@@ -55,6 +56,8 @@ interface QueryCountResult {
     surface: SearchType;
     minPosition: number | null;
     maxPosition: number | null;
+    device: string | null;
+    country: string | null;
   };
   totals: {
     visibleQueries: number;
@@ -74,6 +77,7 @@ interface QueryCountResult {
     changePercent: number;
   } | null;
   topPagesByQueryCount: PageQueryCount[] | null;
+  comparabilityWarning: string | null;
 }
 
 const POSITION_GROUPS = ["1-3", "4-10", "11-20", "21-50", "51+"] as const;
@@ -136,7 +140,9 @@ export async function queryCount(
   urlContains?: string,
   granularity: Granularity = "none",
   minPosition?: number,
-  maxPosition?: number
+  maxPosition?: number,
+  device?: string,
+  country?: string
 ): Promise<QueryCountResult> {
   assertValidDimensions(surface, ["query"]);
 
@@ -153,6 +159,7 @@ export async function queryCount(
   if (url) pageFilters.push({ dimension: "page", operator: "equals", expression: url });
   if (urlContains)
     pageFilters.push({ dimension: "page", operator: "contains", expression: urlContains });
+  pageFilters.push(...deviceCountryFilters(device, country, surface));
   const dimensionFilterGroups = pageFilters.length ? [{ filters: pageFilters }] : undefined;
 
   const scoped = (params: Omit<QueryParams, "dimensionFilterGroups">): QueryParams => ({
@@ -293,6 +300,8 @@ export async function queryCount(
       surface,
       minPosition: minPosition ?? null,
       maxPosition: maxPosition ?? null,
+      device: device ? device.toUpperCase() : null,
+      country: country ? country.toLowerCase() : null,
     },
     totals: {
       visibleQueries: queryRows.length,
@@ -313,5 +322,15 @@ export async function queryCount(
     timeSeries,
     previousPeriod,
     topPagesByQueryCount,
+    // Measured against a live property: the API returns MORE query rows for a
+    // single device slice than for the unfiltered call over the same period
+    // (38,586 unfiltered vs 80,531 for MOBILE alone). Clicks stay consistent,
+    // so the filter itself is fine - the API simply surfaces more queries once
+    // the request is narrowed. Counts are therefore comparable only between
+    // runs with the SAME filter, never between filtered and unfiltered.
+    comparabilityWarning:
+      device || country
+        ? "A device or country filter is active. The API returns more query rows for a narrowed request than for the unfiltered one over the same period, so visibleQueries here is NOT comparable to an unfiltered run or to a run with a different filter - only to runs with this exact filter. Clicks and impressions are unaffected. For counts that stay comparable across slices, use the BigQuery bulk export (gsc_query_count in the BigQuery MCP), which does not truncate."
+        : null,
   };
 }

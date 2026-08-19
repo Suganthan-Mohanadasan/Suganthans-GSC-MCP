@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ALLOWED_DIMENSIONS = void 0;
+exports.DEVICES = exports.ALLOWED_DIMENSIONS = void 0;
 exports.assertValidDimensions = assertValidDimensions;
+exports.deviceCountryFilters = deviceCountryFilters;
 exports.getDateRange = getDateRange;
 exports.getPriorDateRange = getPriorDateRange;
 exports.fetchAllRows = fetchAllRows;
@@ -35,6 +36,39 @@ function assertValidDimensions(searchType, dimensions) {
         throw new Error(`"searchAppearance" must be the only grouping dimension. ` +
             `To break a single appearance down by page/query, filter on searchAppearance instead.`);
     }
+}
+/** Devices as the API spells them in dimension filters. */
+exports.DEVICES = ["MOBILE", "DESKTOP", "TABLET"];
+/**
+ * Dimension filters for device and country.
+ *
+ * Both are optional, and unset means unfiltered - every tool keeps returning
+ * all devices and all countries unless asked otherwise.
+ *
+ * Discover has no device dimension (see ALLOWED_DIMENSIONS), so filtering by
+ * device there is impossible rather than merely empty. That fails loudly.
+ */
+function deviceCountryFilters(device, country, searchType = "web") {
+    const filters = [];
+    if (device) {
+        if (!exports.ALLOWED_DIMENSIONS[searchType].includes("device")) {
+            throw new Error(`searchType "${searchType}" has no device dimension, so it cannot be filtered by device. ` +
+                `Allowed dimensions: [${exports.ALLOWED_DIMENSIONS[searchType].join(", ")}].`);
+        }
+        const upper = device.toUpperCase();
+        if (!exports.DEVICES.includes(upper)) {
+            throw new Error(`Unknown device "${device}". Allowed: ${exports.DEVICES.join(", ")}.`);
+        }
+        filters.push({ dimension: "device", operator: "equals", expression: upper });
+    }
+    if (country) {
+        const lower = country.toLowerCase();
+        if (!/^[a-z]{3}$/.test(lower)) {
+            throw new Error(`Country must be an ISO-3166-1 alpha-3 code such as deu, aut, che or usa - got "${country}".`);
+        }
+        filters.push({ dimension: "country", operator: "equals", expression: lower });
+    }
+    return filters;
 }
 function formatDate(date) {
     return date.toISOString().split("T")[0];

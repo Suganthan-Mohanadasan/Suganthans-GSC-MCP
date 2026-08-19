@@ -49,10 +49,12 @@ server.tool(
     min_impressions: z.number().default(100).describe("Minimum impressions threshold"),
     max_position: z.number().default(15).describe("Maximum position to include"),
     surface: surfaceParam("Surface to query: web (default), image, video, news. Discover is NOT supported here (no query dimension)."),
+    device: z.enum(["MOBILE", "DESKTOP", "TABLET"]).optional().describe("Restrict to one device. Omit for all devices, which is the default. Not available on Discover, which carries no device dimension."),
+    country: z.string().optional().describe("Restrict to one country as an ISO-3166-1 alpha-3 code, e.g. deu, aut, che. Omit for all countries, which is the default."),
   },
-  async ({ days, min_impressions, max_position, surface }) => {
-    const results = await quickWins(days, min_impressions, max_position, surface);
-    const wrapped = withMeta(results, "quick_wins", { days, min_impressions, max_position, surface });
+  async ({ days, min_impressions, max_position, surface, device, country }) => {
+    const results = await quickWins(days, min_impressions, max_position, surface, device, country);
+    const wrapped = withMeta(results, "quick_wins", { days, min_impressions, max_position, surface, device, country });
     return {
       content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };
@@ -67,10 +69,12 @@ server.tool(
     days: z.number().default(28).describe("Number of days to analyse"),
     min_impressions: z.number().default(500).describe("Minimum impressions threshold"),
     surface: surfaceParam("Surface to query: web (default), image, video, news, discover. Discover is page-based and supported."),
+    device: z.enum(["MOBILE", "DESKTOP", "TABLET"]).optional().describe("Restrict to one device. Omit for all devices, which is the default. Not available on Discover, which carries no device dimension."),
+    country: z.string().optional().describe("Restrict to one country as an ISO-3166-1 alpha-3 code, e.g. deu, aut, che. Omit for all countries, which is the default."),
   },
-  async ({ days, min_impressions, surface }) => {
-    const results = await ctrOpportunities(days, min_impressions, surface);
-    const wrapped = withMeta(results, "ctr_opportunities", { days, min_impressions, surface });
+  async ({ days, min_impressions, surface, device, country }) => {
+    const results = await ctrOpportunities(days, min_impressions, surface, device, country);
+    const wrapped = withMeta(results, "ctr_opportunities", { days, min_impressions, surface, device, country });
     return {
       content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };
@@ -169,10 +173,12 @@ server.tool(
   "Find pages that are slowly dying with consistent traffic decline over three consecutive 30-day periods. One bad month is noise; three consecutive bad months is a problem." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX,
   {
     surface: surfaceParam("Surface to query: web (default), image, video, news, discover. Discover is page-based and supported."),
+    device: z.enum(["MOBILE", "DESKTOP", "TABLET"]).optional().describe("Restrict to one device. Omit for all devices, which is the default. Not available on Discover, which carries no device dimension."),
+    country: z.string().optional().describe("Restrict to one country as an ISO-3166-1 alpha-3 code, e.g. deu, aut, che. Omit for all countries, which is the default."),
   },
-  async ({ surface }) => {
-    const results = await contentDecay(surface);
-    const wrapped = withMeta(results, "content_decay", { surface });
+  async ({ surface, device, country }) => {
+    const results = await contentDecay(surface, device, country);
+    const wrapped = withMeta(results, "content_decay", { surface, device, country });
     return {
       content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };
@@ -467,10 +473,12 @@ server.tool(
     include_pages: z.boolean().default(false).describe("Also rank pages by query count. Expensive: needs the page+query dimension pair, capped at 100k rows."),
     top_pages: z.number().default(25).describe("How many pages to return when include_pages is true"),
     surface: surfaceParam("Surface to query: web (default), image, video, news. Discover is NOT supported here (no query dimension)."),
+    device: z.enum(["MOBILE", "DESKTOP", "TABLET"]).optional().describe("Restrict to one device. Omit for all devices, which is the default. Not available on Discover, which carries no device dimension."),
+    country: z.string().optional().describe("Restrict to one country as an ISO-3166-1 alpha-3 code, e.g. deu, aut, che. Omit for all countries, which is the default."),
   },
-  async ({ days, url, url_contains, granularity, min_position, max_position, compare_previous, include_pages, top_pages, surface }) => {
-    const results = await queryCount(days, compare_previous, include_pages, top_pages, surface, url, url_contains, granularity, min_position, max_position);
-    const wrapped = withMeta(results, "query_count", { days, url, url_contains, granularity, min_position, max_position, compare_previous, include_pages, top_pages, surface });
+  async ({ days, url, url_contains, granularity, min_position, max_position, compare_previous, include_pages, top_pages, surface, device, country }) => {
+    const results = await queryCount(days, compare_previous, include_pages, top_pages, surface, url, url_contains, granularity, min_position, max_position, device, country);
+    const wrapped = withMeta(results, "query_count", { days, url, url_contains, granularity, min_position, max_position, compare_previous, include_pages, top_pages, surface, device, country });
     return {
       content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };

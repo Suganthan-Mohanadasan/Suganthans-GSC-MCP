@@ -10,5 +10,5 @@ interface DecayingPage {
     period3Position: number;
     positionTrend: string;
 }
-export declare function contentDecay(searchType?: SearchType): Promise<DecayingPage[]>;
+export declare function contentDecay(searchType?: SearchType, device?: string, country?: string): Promise<DecayingPage[]>;
 export {};

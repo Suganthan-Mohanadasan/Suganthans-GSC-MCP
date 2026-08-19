@@ -9,5 +9,5 @@ interface CtrOpportunity {
     ctrGap: number;
     potentialExtraClicks: number;
 }
-export declare function ctrOpportunities(days?: number, minImpressions?: number, searchType?: SearchType): Promise<CtrOpportunity[]>;
+export declare function ctrOpportunities(days?: number, minImpressions?: number, searchType?: SearchType, device?: string, country?: string): Promise<CtrOpportunity[]>;
 export {};

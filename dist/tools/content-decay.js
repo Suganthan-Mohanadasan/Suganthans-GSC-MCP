@@ -5,8 +5,10 @@ const analytics_js_1 = require("../analytics.js");
 function formatDate(date) {
     return date.toISOString().split("T")[0];
 }
-async function contentDecay(searchType = "web") {
+async function contentDecay(searchType = "web", device, country) {
     (0, analytics_js_1.assertValidDimensions)(searchType, ["page"]);
+    const extra = (0, analytics_js_1.deviceCountryFilters)(device, country, searchType);
+    const dimensionFilterGroups = extra.length ? [{ filters: extra }] : undefined;
     const now = new Date();
     now.setDate(now.getDate() - 1); // yesterday
     // Period 1: 0-30 days ago (most recent)
@@ -24,9 +26,9 @@ async function contentDecay(searchType = "web") {
     const p3Start = new Date(p3End);
     p3Start.setDate(p3Start.getDate() - 29);
     const [rows1, rows2, rows3] = await Promise.all([
-        (0, analytics_js_1.fetchAllRows)({ startDate: formatDate(p1Start), endDate: formatDate(p1End), dimensions: ["page"], searchType }),
-        (0, analytics_js_1.fetchAllRows)({ startDate: formatDate(p2Start), endDate: formatDate(p2End), dimensions: ["page"], searchType }),
-        (0, analytics_js_1.fetchAllRows)({ startDate: formatDate(p3Start), endDate: formatDate(p3End), dimensions: ["page"], searchType }),
+        (0, analytics_js_1.fetchAllRows)({ startDate: formatDate(p1Start), endDate: formatDate(p1End), dimensions: ["page"], searchType, dimensionFilterGroups }),
+        (0, analytics_js_1.fetchAllRows)({ startDate: formatDate(p2Start), endDate: formatDate(p2End), dimensions: ["page"], searchType, dimensionFilterGroups }),
+        (0, analytics_js_1.fetchAllRows)({ startDate: formatDate(p3Start), endDate: formatDate(p3End), dimensions: ["page"], searchType, dimensionFilterGroups }),
     ]);
     const toMap = (rows) => {
         const map = new Map();

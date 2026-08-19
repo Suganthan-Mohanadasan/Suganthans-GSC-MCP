@@ -1,4 +1,9 @@
-import { fetchAllRows, SearchType, assertValidDimensions } from "../analytics.js";
+import {
+  fetchAllRows,
+  SearchType,
+  assertValidDimensions,
+  deviceCountryFilters,
+} from "../analytics.js";
 
 interface DecayingPage {
   page: string;
@@ -17,9 +22,13 @@ function formatDate(date: Date): string {
 }
 
 export async function contentDecay(
-  searchType: SearchType = "web"
+  searchType: SearchType = "web",
+  device?: string,
+  country?: string
 ): Promise<DecayingPage[]> {
   assertValidDimensions(searchType, ["page"]);
+  const extra = deviceCountryFilters(device, country, searchType);
+  const dimensionFilterGroups = extra.length ? [{ filters: extra }] : undefined;
   const now = new Date();
   now.setDate(now.getDate() - 1); // yesterday
 
@@ -41,9 +50,9 @@ export async function contentDecay(
   p3Start.setDate(p3Start.getDate() - 29);
 
   const [rows1, rows2, rows3] = await Promise.all([
-    fetchAllRows({ startDate: formatDate(p1Start), endDate: formatDate(p1End), dimensions: ["page"], searchType }),
-    fetchAllRows({ startDate: formatDate(p2Start), endDate: formatDate(p2End), dimensions: ["page"], searchType }),
-    fetchAllRows({ startDate: formatDate(p3Start), endDate: formatDate(p3End), dimensions: ["page"], searchType }),
+    fetchAllRows({ startDate: formatDate(p1Start), endDate: formatDate(p1End), dimensions: ["page"], searchType, dimensionFilterGroups }),
+    fetchAllRows({ startDate: formatDate(p2Start), endDate: formatDate(p2End), dimensions: ["page"], searchType, dimensionFilterGroups }),
+    fetchAllRows({ startDate: formatDate(p3Start), endDate: formatDate(p3End), dimensions: ["page"], searchType, dimensionFilterGroups }),
   ]);
 
   const toMap = (rows: typeof rows1) => {

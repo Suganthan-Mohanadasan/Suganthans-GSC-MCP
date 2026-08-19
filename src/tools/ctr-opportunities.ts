@@ -1,4 +1,10 @@
-import { fetchAllRows, getDateRange, SearchType, assertValidDimensions } from "../analytics.js";
+import {
+  fetchAllRows,
+  getDateRange,
+  SearchType,
+  assertValidDimensions,
+  deviceCountryFilters,
+} from "../analytics.js";
 
 const EXPECTED_CTR = [0.285, 0.157, 0.110, 0.080, 0.072, 0.051, 0.040, 0.032, 0.028, 0.025];
 
@@ -22,12 +28,17 @@ interface CtrOpportunity {
 export async function ctrOpportunities(
   days: number = 28,
   minImpressions: number = 500,
-  searchType: SearchType = "web"
+  searchType: SearchType = "web",
+  device?: string,
+  country?: string
 ): Promise<CtrOpportunity[]> {
   assertValidDimensions(searchType, ["page"]);
   const { startDate, endDate } = getDateRange(days);
+  const extra = deviceCountryFilters(device, country, searchType);
+  const dimensionFilterGroups = extra.length ? [{ filters: extra }] : undefined;
 
   const rows = await fetchAllRows({
+    dimensionFilterGroups,
     startDate,
     endDate,
     dimensions: ["page"],

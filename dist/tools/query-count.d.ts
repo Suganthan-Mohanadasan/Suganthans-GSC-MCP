@@ -46,6 +46,8 @@ interface QueryCountResult {
         surface: SearchType;
         minPosition: number | null;
         maxPosition: number | null;
+        device: string | null;
+        country: string | null;
     };
     totals: {
         visibleQueries: number;
@@ -69,6 +71,7 @@ interface QueryCountResult {
         changePercent: number;
     } | null;
     topPagesByQueryCount: PageQueryCount[] | null;
+    comparabilityWarning: string | null;
 }
-export declare function queryCount(days?: number, comparePrevious?: boolean, includePages?: boolean, topPages?: number, surface?: SearchType, url?: string, urlContains?: string, granularity?: Granularity, minPosition?: number, maxPosition?: number): Promise<QueryCountResult>;
+export declare function queryCount(days?: number, comparePrevious?: boolean, includePages?: boolean, topPages?: number, surface?: SearchType, url?: string, urlContains?: string, granularity?: Granularity, minPosition?: number, maxPosition?: number, device?: string, country?: string): Promise<QueryCountResult>;
 export {};

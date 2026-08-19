@@ -11,10 +11,13 @@ function expectedCtrAtPosition(pos) {
         return EXPECTED_CTR[Math.floor(pos) - 1];
     return Math.max(0.005, 0.025 - (pos - 10) * 0.002);
 }
-async function quickWins(days = 28, minImpressions = 100, maxPosition = 15, searchType = "web") {
+async function quickWins(days = 28, minImpressions = 100, maxPosition = 15, searchType = "web", device, country) {
     (0, analytics_js_1.assertValidDimensions)(searchType, ["query"]);
     const { startDate, endDate } = (0, analytics_js_1.getDateRange)(days);
+    const extra = (0, analytics_js_1.deviceCountryFilters)(device, country, searchType);
+    const dimensionFilterGroups = extra.length ? [{ filters: extra }] : undefined;
     const rows = await (0, analytics_js_1.fetchAllRows)({
+        dimensionFilterGroups,
         startDate,
         endDate,
         dimensions: ["query"],
