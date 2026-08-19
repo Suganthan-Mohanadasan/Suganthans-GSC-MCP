@@ -455,17 +455,22 @@ server.tool(
 // 24. Query Counting
 server.tool(
   "query_count",
-  "Count how many distinct queries the property is visible for, split by position group (1-3, 4-10, 11-20, 21-50, 51+), with a comparison to the previous period. Also reports the anonymized-click gap: clicks the site total contains but no query row explains, because those queries fall below Google's privacy threshold. Treat the query count as a floor, never as the complete keyword set." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX,
+  "Count how many distinct queries a property, a section or a single URL is visible for, split by position group (1-3, 4-10, 11-20, 21-50, 51+). Scope it with url (one page) or url_contains (a path), turn it into a time series with granularity (day/week/month), and narrow it with min_position/max_position. Also reports the anonymized-click gap: clicks the totals contain but no query row explains, because those queries fall below Google's privacy threshold. The query count is a floor, never the complete keyword set." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX,
   {
     days: z.number().default(28).describe("Number of days to analyse"),
+    url: z.string().optional().describe("Count only queries for this exact URL"),
+    url_contains: z.string().optional().describe("Count only queries for URLs containing this string, e.g. /ratgeber/"),
+    granularity: z.enum(["none", "day", "week", "month"]).default("none").describe("Return a time series of query counts. One API request per bucket, so day-level is capped at 90 days."),
+    min_position: z.number().optional().describe("Only count queries at this average position or worse (e.g. 4)"),
+    max_position: z.number().optional().describe("Only count queries at this average position or better (e.g. 10)"),
     compare_previous: z.boolean().default(true).describe("Also count the immediately preceding period of the same length"),
-    include_pages: z.boolean().default(false).describe("Also count queries per page. Expensive on large sites: needs the page+query dimension pair, capped at 100k rows."),
+    include_pages: z.boolean().default(false).describe("Also rank pages by query count. Expensive: needs the page+query dimension pair, capped at 100k rows."),
     top_pages: z.number().default(25).describe("How many pages to return when include_pages is true"),
     surface: surfaceParam("Surface to query: web (default), image, video, news. Discover is NOT supported here (no query dimension)."),
   },
-  async ({ days, compare_previous, include_pages, top_pages, surface }) => {
-    const results = await queryCount(days, compare_previous, include_pages, top_pages, surface);
-    const wrapped = withMeta(results, "query_count", { days, compare_previous, include_pages, top_pages, surface });
+  async ({ days, url, url_contains, granularity, min_position, max_position, compare_previous, include_pages, top_pages, surface }) => {
+    const results = await queryCount(days, compare_previous, include_pages, top_pages, surface, url, url_contains, granularity, min_position, max_position);
+    const wrapped = withMeta(results, "query_count", { days, url, url_contains, granularity, min_position, max_position, compare_previous, include_pages, top_pages, surface });
     return {
       content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };
