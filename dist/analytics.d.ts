@@ -31,6 +31,8 @@ export interface QueryParams {
         }>;
     }>;
     rowLimit?: number;
+    /** Hard cap on rows fetched across all pages. Omit for no cap. */
+    maxRows?: number;
 }
 /**
  * Validates that the requested dimensions are legal for the chosen surface.

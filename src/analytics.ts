@@ -44,6 +44,8 @@ export interface QueryParams {
     }>;
   }>;
   rowLimit?: number;
+  /** Hard cap on rows fetched across all pages. Omit for no cap. */
+  maxRows?: number;
 }
 
 /**
@@ -139,8 +141,9 @@ export async function fetchAllRows(params: QueryParams, siteUrlOverride?: string
     }
 
     if (rows.length < pageSize) break;
+    if (params.maxRows && allRows.length >= params.maxRows) break;
     startRow += pageSize;
   }
 
-  return allRows;
+  return params.maxRows ? allRows.slice(0, params.maxRows) : allRows;
 }

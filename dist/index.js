@@ -26,9 +26,10 @@ const submit_sitemap_js_1 = require("./tools/submit-sitemap.js");
 const discover_analysis_js_1 = require("./tools/discover-analysis.js");
 const image_analysis_js_1 = require("./tools/image-analysis.js");
 const search_appearance_js_1 = require("./tools/search-appearance.js");
+const query_count_js_1 = require("./tools/query-count.js");
 const server = new mcp_js_1.McpServer({
     name: "gsc-mcp",
-    version: "2.1.0",
+    version: "2.4.0",
 });
 // Shared GSC surface (search type) parameter. "web" is the API default and keeps
 // every tool backwards-compatible. Page-based tools also accept "discover";
@@ -309,10 +310,24 @@ server.tool("search_appearance", "Break down performance by search-appearance / 
         content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };
 });
+// 24. Query Counting
+server.tool("query_count", "Count how many distinct queries the property is visible for, split by position group (1-3, 4-10, 11-20, 21-50, 51+), with a comparison to the previous period. Also reports the anonymized-click gap: clicks the site total contains but no query row explains, because those queries fall below Google's privacy threshold. Treat the query count as a floor, never as the complete keyword set." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
+    days: zod_1.z.number().default(28).describe("Number of days to analyse"),
+    compare_previous: zod_1.z.boolean().default(true).describe("Also count the immediately preceding period of the same length"),
+    include_pages: zod_1.z.boolean().default(false).describe("Also count queries per page. Expensive on large sites: needs the page+query dimension pair, capped at 100k rows."),
+    top_pages: zod_1.z.number().default(25).describe("How many pages to return when include_pages is true"),
+    surface: surfaceParam("Surface to query: web (default), image, video, news. Discover is NOT supported here (no query dimension)."),
+}, async ({ days, compare_previous, include_pages, top_pages, surface }) => {
+    const results = await (0, query_count_js_1.queryCount)(days, compare_previous, include_pages, top_pages, surface);
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "query_count", { days, compare_previous, include_pages, top_pages, surface });
+    return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+});
 async function main() {
     const transport = new stdio_js_1.StdioServerTransport();
     await server.connect(transport);
-    console.error("GSC MCP server v2.1.0 running on stdio");
+    console.error("GSC MCP server v2.4.0 running on stdio");
 }
 main().catch((error) => {
     console.error("Fatal error:", error);

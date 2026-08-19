@@ -101,7 +101,9 @@ async function fetchAllRows(params, siteUrlOverride) {
         }
         if (rows.length < pageSize)
             break;
+        if (params.maxRows && allRows.length >= params.maxRows)
+            break;
         startRow += pageSize;
     }
-    return allRows;
+    return params.maxRows ? allRows.slice(0, params.maxRows) : allRows;
 }

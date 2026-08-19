@@ -1,6 +1,6 @@
 {
   "name": "suganthan-gsc-mcp",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Google Search Console MCP server for Claude. 23 SEO analysis tools including quick wins, traffic drops, content decay, cannibalisation, CTR opportunities, multi-site dashboards, plus isolated Discover, Image and search-appearance (merchant listings) analysis. Most tools accept a surface parameter to query Discover/Image/Video/News. OAuth and service account support.",
   "main": "dist/index.js",
   "bin": {

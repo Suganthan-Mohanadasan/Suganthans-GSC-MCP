@@ -26,10 +26,11 @@ import { submitSitemap, listSitemaps } from "./tools/submit-sitemap.js";
 import { discoverAnalysis } from "./tools/discover-analysis.js";
 import { imageAnalysis } from "./tools/image-analysis.js";
 import { searchAppearance } from "./tools/search-appearance.js";
+import { queryCount } from "./tools/query-count.js";
 
 const server = new McpServer({
   name: "gsc-mcp",
-  version: "2.1.0",
+  version: "2.4.0",
 });
 
 // Shared GSC surface (search type) parameter. "web" is the API default and keeps
@@ -451,10 +452,30 @@ server.tool(
   }
 );
 
+// 24. Query Counting
+server.tool(
+  "query_count",
+  "Count how many distinct queries the property is visible for, split by position group (1-3, 4-10, 11-20, 21-50, 51+), with a comparison to the previous period. Also reports the anonymized-click gap: clicks the site total contains but no query row explains, because those queries fall below Google's privacy threshold. Treat the query count as a floor, never as the complete keyword set." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX,
+  {
+    days: z.number().default(28).describe("Number of days to analyse"),
+    compare_previous: z.boolean().default(true).describe("Also count the immediately preceding period of the same length"),
+    include_pages: z.boolean().default(false).describe("Also count queries per page. Expensive on large sites: needs the page+query dimension pair, capped at 100k rows."),
+    top_pages: z.number().default(25).describe("How many pages to return when include_pages is true"),
+    surface: surfaceParam("Surface to query: web (default), image, video, news. Discover is NOT supported here (no query dimension)."),
+  },
+  async ({ days, compare_previous, include_pages, top_pages, surface }) => {
+    const results = await queryCount(days, compare_previous, include_pages, top_pages, surface);
+    const wrapped = withMeta(results, "query_count", { days, compare_previous, include_pages, top_pages, surface });
+    return {
+      content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+  }
+);
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("GSC MCP server v2.1.0 running on stdio");
+  console.error("GSC MCP server v2.4.0 running on stdio");
 }
 
 main().catch((error) => {
