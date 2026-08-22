@@ -2,9 +2,9 @@
   "manifest_version": "0.2",
   "name": "suganthan-gsc-mcp",
   "display_name": "Suganthan's GSC MCP",
-  "version": "2.4.0",
-  "description": "Ask Claude real questions about your Google Search Console data. 27 SEO analysis tools, local and private.",
-  "long_description": "A Google Search Console MCP server that answers questions, not API rows: quick win keywords, traffic drops, content decay, cannibalisation, CTR benchmarks, multi site dashboards, and a full image search suite. Free and open source. Runs entirely on your machine: your data goes straight from this computer to Google and nothing passes through anyone else's servers.",
+  "version": "2.5.0",
+  "description": "Ask Claude real questions about your Google Search Console data. 28 SEO analysis tools, local and private.",
+  "long_description": "A Google Search Console MCP server that answers questions, not API rows: quick win keywords, traffic drops, content decay, cannibalisation, CTR benchmarks, multi site dashboards, and a full image search suite with an on-page image audit. Free and open source. Runs entirely on your machine: your data goes straight from this computer to Google and nothing passes through anyone else's servers.",
   "author": {
     "name": "Suganthan Mohanadasan",
     "email": "sugan@suganthan.com",

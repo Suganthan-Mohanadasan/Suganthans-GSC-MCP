@@ -6,6 +6,8 @@ An MCP server for Google Search Console that lets you ask Claude questions about
 
 > **Full setup guide with screenshots:** [suganthan.com/blog/google-search-console-mcp-server/](https://suganthan.com/blog/google-search-console-mcp-server/)
 
+> **v2.5.0 update (August 2026):** new tool `image_page_audit` closes the image SEO loop. The v2.3 suite tells you which pages fail in image search; this one fetches those pages from your own site and tells you why: alt text, filenames, dimension attributes, lazy loading on the LCP image, formats and weights, the ~250x200 indexing minimum, ImageObject/licensable schema, max-image-preview, and the metadata inside the image files (camera EXIF to strip, IPTC to keep, DigitalSourceType on AI images). It only ever fetches the URLs you give it.
+
 > **v2.4.0 update (August 2026):** new tool `genai_conversation_queries` finds the AI conversations leaking into your query report. People reply to Google's AI with things like "yes, go on", Google logs every follow-up as a new query, and this tool sorts all of it into seven classified buckets with landing pages and a monthly timeline. Full method and findings: ["Yes, Go On": The AI Conversations Leaking Into Your Search Console](https://suganthan.com/blog/ai-mode-queries-search-console/).
 
 ## See it in action
@@ -159,7 +161,7 @@ For multiple properties, add `GSC_SITE_URLS`:
 }
 ```
 
-## All 28 tools
+## All 29 tools
 
 ### Analysis
 
@@ -181,7 +183,7 @@ For multiple properties, add `GSC_SITE_URLS`:
 | `generate_report` | Full markdown report saved to disk |
 | `multi_site_dashboard` | Health check across all properties in one command |
 
-### Image SEO (v2.3)
+### Image SEO (v2.3 + v2.5)
 
 These tools pass `type=image` to the GSC Search Analytics API, which most third-party tools never expose. They cover the visual-search surface end-to-end.
 
@@ -194,6 +196,7 @@ These tools pass `type=image` to the GSC Search Analytics API, which most third-
 | `image_keyword_trends` | Period-over-period deltas for image-search queries. Impressions delta and position delta (negative position delta means the query improved its average rank) |
 | `image_impressions_no_clicks` | Query and page pairs earning meaningful image impressions but near-zero clicks. The textbook thumbnail-not-converting pattern |
 | `image_content_decay` | Image-search version of `content_decay`. Pages losing image-search traffic across 3 consecutive 30-day periods, sorted by total click loss |
+| `image_page_audit` | Fetches pages from your own site and audits every image on them: alt text, filenames, width/height attributes, lazy loading on the LCP candidate, srcset, format and weight, intrinsic dimensions vs the ~250x200 indexing minimum, ImageObject and licensable schema, max-image-preview, and in-file metadata (camera EXIF, IPTC editorial fields, XMP DigitalSourceType). The bridge from "which pages fail" to "why they fail" (v2.5) |
 
 ### Indexing
 
@@ -244,6 +247,10 @@ Step-by-step setup with screenshots, use cases, and examples:
 **[suganthan.com/blog/google-search-console-mcp-server/](https://suganthan.com/blog/google-search-console-mcp-server/)**
 
 ## Changelog
+
+**v2.5.0** Image page audit. `image_page_audit` fetches up to 5 pages from your own site and audits every image on them against the on-page factors that decide image-search performance: missing, empty, generic, filename-as-alt or duplicate alt text, camera-default filenames, missing width/height attributes, lazy loading on the LCP candidate, srcset coverage, file format and weight (flags photos shipped as PNG and anything over 500KB), intrinsic dimensions against Google's ~250x200 indexing minimum, ImageObject and licensable-field schema, primaryImageOfPage, max-image-preview, inline background images, and the metadata inside the image files via exifr: camera EXIF and GPS that should be stripped, IPTC Creator/Copyright/Caption that should survive your CMS, and XMP DigitalSourceType on AI-generated images. Returns per-image findings, page-level checks, and an ordered top_fixes list. Pairs with `image_impressions_no_clicks` and `image_search_quick_wins`: those name the pages, this names the reasons. Fetches only the URLs it is given, so the privacy model is unchanged: your data goes to Google and your own site and nowhere else. New dependencies: node-html-parser, image-size, exifr (all pure JS, no native builds).
+
+<!-- Screenshot pending before push: capture the image_page_audit dashboard (demo-mock or a real run) and add it here as ![Per-image findings from image_page_audit](screenshots/image-page-audit.jpg) -->
 
 **v2.4.0** Generative AI conversation queries. `genai_conversation_queries` finds the AI conversation fragments hiding in your regular query data and sorts them into seven kinds: reply artefacts ("yes", "go on"), pivot follow-ups ("what about resend?"), conversational questions, tracker probes, agent harnesses, pasted strings, and a review pile. Google counts every AI Mode follow-up as a brand new query, so these rows carry real impressions, positions and clicks, and the dedicated Generative AI report has no query view, which makes this the only query-level AI evidence available anywhere. One call classifies sixteen months of your queries, attaches landing pages via query and page grouping, and returns a monthly reply-artefact timeline. Plain Search Analytics API, no BigQuery, no new permissions. Full method and findings: [the launch post](https://suganthan.com/blog/ai-mode-queries-search-console/). Sparked by [Anastasia Kourou surfacing the queries](https://www.linkedin.com/posts/anastasia-kourou-4b393034_hi-john-mueller-i-am-noticing-some-unusual-share-7489988919229353984-FJ0m/) with John Mueller confirming the mechanism, and by [Ross Tavendale asking](https://x.com/rtavs/status/2084710985298780579) how to reverse engineer it.
 

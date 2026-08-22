@@ -6,3 +6,5 @@ node_modules/
 !tsconfig.json
 *.mcpb
 !manifest.json
+demo-mock/
+probe-platform-properties.mjs

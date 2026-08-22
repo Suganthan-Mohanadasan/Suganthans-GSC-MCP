@@ -21,7 +21,9 @@ export const VISUAL_SUFFIX =
 export function withMeta(
   data: unknown,
   toolName: string,
-  params: Record<string, unknown>
+  params: Record<string, unknown>,
+  source: string = "Google Search Console API (live data)",
+  note: string = "All numbers in this response come directly from the Google Search Console API. They are exact values, not estimates. Base your analysis only on this data. Do not invent or assume additional context."
 ): {
   _meta: {
     source: string;
@@ -33,11 +35,10 @@ export function withMeta(
 } {
   return {
     _meta: {
-      source: "Google Search Console API (live data)",
+      source,
       tool: toolName,
       parameters: params,
-      note:
-        "All numbers in this response come directly from the Google Search Console API. They are exact values, not estimates. Base your analysis only on this data. Do not invent or assume additional context.",
+      note,
     },
     data,
   };

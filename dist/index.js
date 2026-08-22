@@ -35,9 +35,12 @@ const image_content_decay_js_1 = require("./tools/image-content-decay.js");
 // conversation exhaust leaks into the regular query dimension. See the tool
 // file for the mechanism and sources.
 const genai_conversation_queries_js_1 = require("./tools/genai-conversation-queries.js");
+// v2.5: the bridge from "which pages fail in image search" to "why". Fetches
+// the user's own pages and audits the on-page image factors.
+const image_page_audit_js_1 = require("./tools/image-page-audit.js");
 const server = new mcp_js_1.McpServer({
     name: "gsc-mcp",
-    version: "2.4.0",
+    version: "2.5.0",
 });
 // 1. Quick Wins
 server.tool("quick_wins", "Find keywords you're almost ranking for that could be pushed to page one. Returns queries at positions 4-15 with high impressions, sorted by traffic opportunity." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
@@ -371,6 +374,19 @@ server.tool("genai_conversation_queries", "Surface AI-conversation exhaust hidin
         content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };
 });
+// 29. Image Page Audit
+server.tool("image_page_audit", "Fetches pages from YOUR OWN site and audits every image on them for the on-page factors that drive image-search performance: missing/empty/generic/duplicate alt text, non-descriptive filenames, missing width/height attributes, lazy loading on the LCP candidate, srcset coverage, file format and weight, intrinsic dimensions vs Google's ~250x200 indexing minimum, ImageObject and licensable schema, max-image-preview, inline background images, and the metadata inside the image files (camera EXIF and GPS that should be stripped, IPTC Creator/Copyright/Caption that should survive, XMP DigitalSourceType on AI-generated images). Feed it URLs straight from image_impressions_no_clicks or image_search_quick_wins to turn 'which pages fail' into 'why they fail'. Only fetches the URLs given; no third-party service involved. Returns a per-image findings table, page-level checks, and an ordered top_fixes list." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
+    urls: zod_1.z.array(zod_1.z.string()).min(1).max(5).describe("Page URLs to audit (1-5, from your own site)"),
+    fetch_metadata: zod_1.z.boolean().default(true).describe("Also read EXIF/IPTC/XMP metadata from the image files"),
+    max_images_per_page: zod_1.z.number().default(12).describe("Maximum images fetched and weighed per page (HTML checks still cover all images)"),
+    max_images_reported: zod_1.z.number().default(20).describe("Maximum per-image rows returned per page"),
+}, async ({ urls, fetch_metadata, max_images_per_page, max_images_reported }) => {
+    const results = await (0, image_page_audit_js_1.imagePageAudit)(urls, fetch_metadata, max_images_per_page, max_images_reported);
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "image_page_audit", { urls, fetch_metadata, max_images_per_page, max_images_reported }, "Live fetch of the audited pages (the user's own site)", "All findings come from fetching and parsing the listed pages and image files at call time. Alt text, attributes, bytes, and dimensions are read values, not estimates. Base your analysis only on this data. An empty alt (alt=\"\") is correct for decorative images; do not report it as a defect.");
+    return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+});
 async function main() {
     const cmd = process.argv[2];
     if (cmd === "setup") {
@@ -379,12 +395,12 @@ async function main() {
         process.exit(code);
     }
     if (cmd === "--version" || cmd === "-v") {
-        console.log("2.4.0");
+        console.log("2.5.0");
         process.exit(0);
     }
     const transport = new stdio_js_1.StdioServerTransport();
     await server.connect(transport);
-    console.error("GSC MCP server v2.4.0 running on stdio");
+    console.error("GSC MCP server v2.5.0 running on stdio");
 }
 main().catch((error) => {
     console.error("Fatal error:", error);

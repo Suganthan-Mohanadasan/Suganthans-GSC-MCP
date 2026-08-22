@@ -13,7 +13,7 @@ export declare const VISUAL_SUFFIX = " PRESENTATION: Always present these result
  * Wraps tool results with a _meta provenance field so Claude
  * knows the data source and is anchored to the actual numbers.
  */
-export declare function withMeta(data: unknown, toolName: string, params: Record<string, unknown>): {
+export declare function withMeta(data: unknown, toolName: string, params: Record<string, unknown>, source?: string, note?: string): {
     _meta: {
         source: string;
         tool: string;

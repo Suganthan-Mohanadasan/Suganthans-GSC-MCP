@@ -17,13 +17,13 @@ exports.VISUAL_SUFFIX = " PRESENTATION: Always present these results as a rich, 
  * Wraps tool results with a _meta provenance field so Claude
  * knows the data source and is anchored to the actual numbers.
  */
-function withMeta(data, toolName, params) {
+function withMeta(data, toolName, params, source = "Google Search Console API (live data)", note = "All numbers in this response come directly from the Google Search Console API. They are exact values, not estimates. Base your analysis only on this data. Do not invent or assume additional context.") {
     return {
         _meta: {
-            source: "Google Search Console API (live data)",
+            source,
             tool: toolName,
             parameters: params,
-            note: "All numbers in this response come directly from the Google Search Console API. They are exact values, not estimates. Base your analysis only on this data. Do not invent or assume additional context.",
+            note,
         },
         data,
     };
