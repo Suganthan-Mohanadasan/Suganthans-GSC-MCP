@@ -47,6 +47,11 @@ const GENERIC_ALTS = new Set([
     "thumbnail",
 ]);
 const GENERIC_FILENAME = /^(img|image|dsc[fn]?|mvimg|pxl|screen[-_ ]?shot|screenshot|photo|unnamed|untitled|capture|whatsapp[-_ ]image|signal[-_]attachment|hero|thumbnail|default|placeholder|final|new)[\-_ ]?\d*$/i;
+// Stock-agency default filenames (shutterstock_524347192.jpg and friends) are
+// the stock-photo equivalent of camera defaults: an opaque ID that tells
+// Google nothing about the subject. Prefix match, because CMS resizing
+// appends suffixes like -1024x694.
+const STOCK_FILENAME = /^(shutterstock|istock(photo)?|getty(images)?|adobestock|stock-photo|depositphotos|dreamstime|bigstock|123rf|alamy|pexels|unsplash)[-_]/i;
 function basenameNoExt(src) {
     try {
         const path = new URL(src).pathname;
@@ -61,7 +66,7 @@ function classifyFilename(src) {
     const base = basenameNoExt(src);
     if (!base)
         return "ok";
-    if (GENERIC_FILENAME.test(base) || /^\d+$/.test(base)) {
+    if (GENERIC_FILENAME.test(base) || STOCK_FILENAME.test(base) || /^\d+$/.test(base)) {
         return "generic_or_nondescriptive";
     }
     if (/^[0-9a-f]{16,}$/i.test(base.replace(/-/g, "")))
@@ -262,8 +267,16 @@ async function imagePageAudit(urls, fetchMetadata = true, maxImagesPerPage = 12,
         const candidates = [];
         const seen = new Set();
         for (const el of imgElements) {
-            let src = el.getAttribute("src") ??
-                el.getAttribute("data-src") ??
+            // JS lazy-loaders (WP Rocket, Smush, LiteSpeed, Autoptimize) put an
+            // inline data: placeholder in src and the real URL in a data-* attr,
+            // so a data: src means "unset", not "skip the image".
+            const attrSrc = el.getAttribute("src");
+            const directSrc = attrSrc && !attrSrc.startsWith("data:") ? attrSrc : null;
+            const lazySrc = el.getAttribute("data-src") ??
+                el.getAttribute("data-lazy-src") ??
+                el.getAttribute("data-original");
+            let src = directSrc ??
+                lazySrc ??
                 (el.getAttribute("srcset") ?? "").split(/[\s,]+/)[0] ??
                 "";
             if (!src || src.startsWith("data:"))
@@ -277,7 +290,7 @@ async function imagePageAudit(urls, fetchMetadata = true, maxImagesPerPage = 12,
             if (seen.has(src))
                 continue;
             seen.add(src);
-            candidates.push({ el, src });
+            candidates.push({ el, src, jsLazy: directSrc === null && lazySrc !== null });
         }
         const isIconLike = (c) => {
             const w = Number(c.el.getAttribute("width") ?? "0");
@@ -310,9 +323,9 @@ async function imagePageAudit(urls, fetchMetadata = true, maxImagesPerPage = 12,
                 alt_status: classifyAlt(alt, c.src, duplicateAlts),
                 filename_status: classifyFilename(c.src),
                 has_width_height_attrs: c.el.hasAttribute("width") && c.el.hasAttribute("height"),
-                loading: c.el.getAttribute("loading") ?? null,
+                loading: c.el.getAttribute("loading") ?? (c.jsLazy ? "lazy" : null),
                 fetchpriority: c.el.getAttribute("fetchpriority") ?? null,
-                has_srcset: c.el.hasAttribute("srcset"),
+                has_srcset: c.el.hasAttribute("srcset") || c.el.hasAttribute("data-srcset"),
                 fetched: false,
                 format: null,
                 bytes: null,
@@ -347,7 +360,8 @@ async function imagePageAudit(urls, fetchMetadata = true, maxImagesPerPage = 12,
             }
         }
         const lcpLazy = lcpCandidate
-            ? (lcpCandidate.el.getAttribute("loading") ?? "").toLowerCase() === "lazy"
+            ? (lcpCandidate.el.getAttribute("loading") ?? "").toLowerCase() === "lazy" ||
+                lcpCandidate.jsLazy
             : null;
         const topFixes = [];
         if (lcpLazy)
