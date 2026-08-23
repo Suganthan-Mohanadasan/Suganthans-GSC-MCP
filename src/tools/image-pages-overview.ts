@@ -18,7 +18,8 @@ export async function imagePagesOverview(
   days: number = 90,
   minImpressions: number = 100,
   rowLimit: number = 50,
-  orderBy: "impressions" | "clicks" | "position" = "clicks"
+  orderBy: "impressions" | "clicks" | "position" = "clicks",
+  siteUrl?: string
 ): Promise<ImagePageRow[]> {
   const { startDate, endDate } = getDateRange(days);
 
@@ -27,7 +28,7 @@ export async function imagePagesOverview(
     endDate,
     dimensions: ["page"],
     type: "image",
-  });
+  }, siteUrl);
 
   const filtered = rows.filter((r) => r.impressions >= minImpressions);
 

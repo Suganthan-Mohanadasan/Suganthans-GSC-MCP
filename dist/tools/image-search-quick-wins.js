@@ -26,14 +26,14 @@ function expectedImageCtrAtPosition(pos) {
  * estimated extra clicks if the query reached position 3, using the
  * image-search CTR baseline above.
  */
-async function imageSearchQuickWins(days = 90, minImpressions = 500, maxPosition = 15) {
+async function imageSearchQuickWins(days = 90, minImpressions = 500, maxPosition = 15, siteUrl) {
     const { startDate, endDate } = (0, analytics_js_1.getDateRange)(days);
     const rows = await (0, analytics_js_1.fetchAllRows)({
         startDate,
         endDate,
         dimensions: ["query"],
         type: "image",
-    });
+    }, siteUrl);
     const wins = [];
     for (const row of rows) {
         const position = row.position;

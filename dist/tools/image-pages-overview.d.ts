@@ -11,5 +11,5 @@ interface ImagePageRow {
  * paired with image-keyword-overview to map "what queries are we ranking on"
  * back to "which pages carry that ranking".
  */
-export declare function imagePagesOverview(days?: number, minImpressions?: number, rowLimit?: number, orderBy?: "impressions" | "clicks" | "position"): Promise<ImagePageRow[]>;
+export declare function imagePagesOverview(days?: number, minImpressions?: number, rowLimit?: number, orderBy?: "impressions" | "clicks" | "position", siteUrl?: string): Promise<ImagePageRow[]>;
 export {};

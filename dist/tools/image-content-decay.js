@@ -13,7 +13,7 @@ function formatDate(date) {
  * Default minimum p3 clicks is lower than the web equivalent because image
  * search produces lower click volumes overall.
  */
-async function imageContentDecay(minPeriod3Clicks = 5) {
+async function imageContentDecay(minPeriod3Clicks = 5, siteUrl) {
     const now = new Date();
     now.setDate(now.getDate() - 1);
     // Period 1: 0-30 days ago (most recent)
@@ -36,19 +36,19 @@ async function imageContentDecay(minPeriod3Clicks = 5) {
             endDate: formatDate(p1End),
             dimensions: ["page"],
             type: "image",
-        }),
+        }, siteUrl),
         (0, analytics_js_1.fetchAllRows)({
             startDate: formatDate(p2Start),
             endDate: formatDate(p2End),
             dimensions: ["page"],
             type: "image",
-        }),
+        }, siteUrl),
         (0, analytics_js_1.fetchAllRows)({
             startDate: formatDate(p3Start),
             endDate: formatDate(p3End),
             dimensions: ["page"],
             type: "image",
-        }),
+        }, siteUrl),
     ]);
     const toMap = (rows) => {
         const map = new Map();

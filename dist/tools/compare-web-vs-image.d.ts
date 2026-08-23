@@ -19,5 +19,5 @@ interface ComparisonRow {
  * image-heavy sites this ratio can exceed 1 across most of the catalogue.
  * `-1` indicates the query has image impressions but zero web impressions.
  */
-export declare function compareWebVsImage(days?: number, minCombinedImpressions?: number, rowLimit?: number): Promise<ComparisonRow[]>;
+export declare function compareWebVsImage(days?: number, minCombinedImpressions?: number, rowLimit?: number, siteUrl?: string): Promise<ComparisonRow[]>;
 export {};

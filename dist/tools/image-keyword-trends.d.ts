@@ -15,5 +15,5 @@ interface TrendRow {
  * are gaining or losing visibility. Negative position delta means the query
  * improved its average rank (smaller position number = better rank).
  */
-export declare function imageKeywordTrends(days?: number, minCombinedImpressions?: number, rowLimit?: number, orderBy?: "impressions_delta" | "position_delta"): Promise<TrendRow[]>;
+export declare function imageKeywordTrends(days?: number, minCombinedImpressions?: number, rowLimit?: number, orderBy?: "impressions_delta" | "position_delta", siteUrl?: string): Promise<TrendRow[]>;
 export {};

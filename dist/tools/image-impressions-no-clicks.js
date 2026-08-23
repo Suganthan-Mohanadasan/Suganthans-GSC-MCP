@@ -11,14 +11,14 @@ const analytics_js_1 = require("../analytics.js");
  * Defaults are tuned for image search, which runs at much higher impression
  * volumes per page than web search.
  */
-async function imageImpressionsNoClicks(days = 90, minImpressions = 500, maxClicks = 2, rowLimit = 50) {
+async function imageImpressionsNoClicks(days = 90, minImpressions = 500, maxClicks = 2, rowLimit = 50, siteUrl) {
     const { startDate, endDate } = (0, analytics_js_1.getDateRange)(days);
     const rows = await (0, analytics_js_1.fetchAllRows)({
         startDate,
         endDate,
         dimensions: ["query", "page"],
         type: "image",
-    });
+    }, siteUrl);
     const filtered = rows.filter((r) => r.impressions >= minImpressions && r.clicks <= maxClicks);
     filtered.sort((a, b) => b.impressions - a.impressions);
     return filtered.slice(0, rowLimit).map((r) => ({

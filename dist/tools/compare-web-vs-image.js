@@ -11,11 +11,11 @@ const analytics_js_1 = require("../analytics.js");
  * image-heavy sites this ratio can exceed 1 across most of the catalogue.
  * `-1` indicates the query has image impressions but zero web impressions.
  */
-async function compareWebVsImage(days = 90, minCombinedImpressions = 100, rowLimit = 50) {
+async function compareWebVsImage(days = 90, minCombinedImpressions = 100, rowLimit = 50, siteUrl) {
     const { startDate, endDate } = (0, analytics_js_1.getDateRange)(days);
     const [webRows, imageRows] = await Promise.all([
-        (0, analytics_js_1.fetchAllRows)({ startDate, endDate, dimensions: ["query"], type: "web" }),
-        (0, analytics_js_1.fetchAllRows)({ startDate, endDate, dimensions: ["query"], type: "image" }),
+        (0, analytics_js_1.fetchAllRows)({ startDate, endDate, dimensions: ["query"], type: "web" }, siteUrl),
+        (0, analytics_js_1.fetchAllRows)({ startDate, endDate, dimensions: ["query"], type: "image" }, siteUrl),
     ]);
     const toMap = (rows) => {
         const map = new Map();

@@ -28,7 +28,8 @@ function formatDate(date: Date): string {
  * search produces lower click volumes overall.
  */
 export async function imageContentDecay(
-  minPeriod3Clicks: number = 5
+  minPeriod3Clicks: number = 5,
+  siteUrl?: string
 ): Promise<DecayingImagePage[]> {
   const now = new Date();
   now.setDate(now.getDate() - 1);
@@ -56,19 +57,19 @@ export async function imageContentDecay(
       endDate: formatDate(p1End),
       dimensions: ["page"],
       type: "image",
-    }),
+    }, siteUrl),
     fetchAllRows({
       startDate: formatDate(p2Start),
       endDate: formatDate(p2End),
       dimensions: ["page"],
       type: "image",
-    }),
+    }, siteUrl),
     fetchAllRows({
       startDate: formatDate(p3Start),
       endDate: formatDate(p3End),
       dimensions: ["page"],
       type: "image",
-    }),
+    }, siteUrl),
   ]);
 
   interface PageStats {

@@ -8,7 +8,7 @@ const analytics_js_1 = require("../analytics.js");
  * are gaining or losing visibility. Negative position delta means the query
  * improved its average rank (smaller position number = better rank).
  */
-async function imageKeywordTrends(days = 28, minCombinedImpressions = 100, rowLimit = 50, orderBy = "impressions_delta") {
+async function imageKeywordTrends(days = 28, minCombinedImpressions = 100, rowLimit = 50, orderBy = "impressions_delta", siteUrl) {
     const current = (0, analytics_js_1.getDateRange)(days);
     const prior = (0, analytics_js_1.getPriorDateRange)(days);
     const [currentRows, priorRows] = await Promise.all([
@@ -17,13 +17,13 @@ async function imageKeywordTrends(days = 28, minCombinedImpressions = 100, rowLi
             endDate: current.endDate,
             dimensions: ["query"],
             type: "image",
-        }),
+        }, siteUrl),
         (0, analytics_js_1.fetchAllRows)({
             startDate: prior.startDate,
             endDate: prior.endDate,
             dimensions: ["query"],
             type: "image",
-        }),
+        }, siteUrl),
     ]);
     const toMap = (rows) => {
         const map = new Map();

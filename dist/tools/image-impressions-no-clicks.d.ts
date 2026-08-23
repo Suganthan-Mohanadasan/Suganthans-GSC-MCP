@@ -15,5 +15,5 @@ interface NoClickRow {
  * Defaults are tuned for image search, which runs at much higher impression
  * volumes per page than web search.
  */
-export declare function imageImpressionsNoClicks(days?: number, minImpressions?: number, maxClicks?: number, rowLimit?: number): Promise<NoClickRow[]>;
+export declare function imageImpressionsNoClicks(days?: number, minImpressions?: number, maxClicks?: number, rowLimit?: number, siteUrl?: string): Promise<NoClickRow[]>;
 export {};

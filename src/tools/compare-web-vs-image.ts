@@ -25,13 +25,14 @@ interface ComparisonRow {
 export async function compareWebVsImage(
   days: number = 90,
   minCombinedImpressions: number = 100,
-  rowLimit: number = 50
+  rowLimit: number = 50,
+  siteUrl?: string
 ): Promise<ComparisonRow[]> {
   const { startDate, endDate } = getDateRange(days);
 
   const [webRows, imageRows] = await Promise.all([
-    fetchAllRows({ startDate, endDate, dimensions: ["query"], type: "web" }),
-    fetchAllRows({ startDate, endDate, dimensions: ["query"], type: "image" }),
+    fetchAllRows({ startDate, endDate, dimensions: ["query"], type: "web" }, siteUrl),
+    fetchAllRows({ startDate, endDate, dimensions: ["query"], type: "image" }, siteUrl),
   ]);
 
   const toMap = (rows: SearchAnalyticsRow[]): Map<string, SearchAnalyticsRow> => {

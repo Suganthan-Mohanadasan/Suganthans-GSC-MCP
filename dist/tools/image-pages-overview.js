@@ -8,14 +8,14 @@ const analytics_js_1 = require("../analytics.js");
  * paired with image-keyword-overview to map "what queries are we ranking on"
  * back to "which pages carry that ranking".
  */
-async function imagePagesOverview(days = 90, minImpressions = 100, rowLimit = 50, orderBy = "clicks") {
+async function imagePagesOverview(days = 90, minImpressions = 100, rowLimit = 50, orderBy = "clicks", siteUrl) {
     const { startDate, endDate } = (0, analytics_js_1.getDateRange)(days);
     const rows = await (0, analytics_js_1.fetchAllRows)({
         startDate,
         endDate,
         dimensions: ["page"],
         type: "image",
-    });
+    }, siteUrl);
     const filtered = rows.filter((r) => r.impressions >= minImpressions);
     if (orderBy === "impressions") {
         filtered.sort((a, b) => b.impressions - a.impressions);

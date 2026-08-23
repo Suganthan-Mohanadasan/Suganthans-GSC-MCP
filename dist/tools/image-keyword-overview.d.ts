@@ -11,5 +11,5 @@ interface ImageKeywordRow {
  * v2.3). Default window is 90 days because image-search volume is generally
  * lower than web and a longer window surfaces more signal.
  */
-export declare function imageKeywordOverview(days?: number, minImpressions?: number, rowLimit?: number, orderBy?: "impressions" | "clicks" | "position"): Promise<ImageKeywordRow[]>;
+export declare function imageKeywordOverview(days?: number, minImpressions?: number, rowLimit?: number, orderBy?: "impressions" | "clicks" | "position", siteUrl?: string): Promise<ImageKeywordRow[]>;
 export {};

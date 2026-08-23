@@ -20,5 +20,5 @@ interface DecayingImagePage {
  * Default minimum p3 clicks is lower than the web equivalent because image
  * search produces lower click volumes overall.
  */
-export declare function imageContentDecay(minPeriod3Clicks?: number): Promise<DecayingImagePage[]>;
+export declare function imageContentDecay(minPeriod3Clicks?: number, siteUrl?: string): Promise<DecayingImagePage[]>;
 export {};

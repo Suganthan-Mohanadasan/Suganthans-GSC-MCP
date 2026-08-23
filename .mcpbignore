@@ -12,6 +12,7 @@ tsconfig.json
 package-lock.json
 .gitignore
 .git/
+.claude/
 *.mcpb
 
 # dev dependencies (not needed at runtime)

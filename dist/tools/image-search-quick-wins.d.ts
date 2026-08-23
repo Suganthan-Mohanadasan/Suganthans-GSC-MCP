@@ -12,5 +12,5 @@ interface ImageQuickWin {
  * estimated extra clicks if the query reached position 3, using the
  * image-search CTR baseline above.
  */
-export declare function imageSearchQuickWins(days?: number, minImpressions?: number, maxPosition?: number): Promise<ImageQuickWin[]>;
+export declare function imageSearchQuickWins(days?: number, minImpressions?: number, maxPosition?: number, siteUrl?: string): Promise<ImageQuickWin[]>;
 export {};
