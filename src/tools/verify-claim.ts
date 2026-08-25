@@ -73,10 +73,18 @@ export async function verifyClaim(
           ? Math.round((totalClicks / totalImpressions) * 10000) / 100
           : 0;
     } else if (metric === "position") {
+      const totalImpressions = rows.reduce((sum, r) => sum + r.impressions, 0);
+      // Impression-weighted so the result matches the GSC UI's own average
       actualValue =
-        Math.round(
-          (rows.reduce((sum, r) => sum + r.position, 0) / rows.length) * 10
-        ) / 10;
+        totalImpressions > 0
+          ? Math.round(
+              (rows.reduce((sum, r) => sum + r.position * r.impressions, 0) /
+                totalImpressions) *
+                10
+            ) / 10
+          : Math.round(
+              (rows.reduce((sum, r) => sum + r.position, 0) / rows.length) * 10
+            ) / 10;
     }
   }
 

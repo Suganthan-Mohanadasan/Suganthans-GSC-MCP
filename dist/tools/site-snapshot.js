@@ -10,18 +10,19 @@ async function siteSnapshot(days = 28) {
         (0, analytics_js_1.fetchAllRows)({ startDate: prior.startDate, endDate: prior.endDate, dimensions: ["date"] }),
     ]);
     const sum = (rows) => {
-        let clicks = 0, impressions = 0, posSum = 0, posCount = 0;
+        let clicks = 0, impressions = 0, posWeight = 0;
         for (const r of rows) {
             clicks += r.clicks;
             impressions += r.impressions;
-            posSum += r.position;
-            posCount++;
+            // Each row's position is already impression-weighted within the row, so
+            // weighting by impressions here reproduces the true period-wide average
+            posWeight += r.position * r.impressions;
         }
         return {
             clicks,
             impressions,
             ctr: impressions > 0 ? Math.round((clicks / impressions) * 10000) / 100 : 0,
-            position: posCount > 0 ? Math.round((posSum / posCount) * 10) / 10 : 0,
+            position: impressions > 0 ? Math.round((posWeight / impressions) * 10) / 10 : 0,
         };
     };
     const c = sum(currentRows);

@@ -54,8 +54,14 @@ async function verifyClaim(claim, metric, expectedValue, url, query, days = 28) 
                     : 0;
         }
         else if (metric === "position") {
+            const totalImpressions = rows.reduce((sum, r) => sum + r.impressions, 0);
+            // Impression-weighted so the result matches the GSC UI's own average
             actualValue =
-                Math.round((rows.reduce((sum, r) => sum + r.position, 0) / rows.length) * 10) / 10;
+                totalImpressions > 0
+                    ? Math.round((rows.reduce((sum, r) => sum + r.position * r.impressions, 0) /
+                        totalImpressions) *
+                        10) / 10
+                    : Math.round((rows.reduce((sum, r) => sum + r.position, 0) / rows.length) * 10) / 10;
         }
     }
     const tolerance = metric === "position" ? 0.5 : expectedValue * 0.05;
