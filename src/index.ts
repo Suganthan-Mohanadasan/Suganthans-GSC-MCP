@@ -41,7 +41,7 @@ import { imagePageAudit } from "./tools/image-page-audit.js";
 
 const server = new McpServer({
   name: "gsc-mcp",
-  version: "2.5.0",
+  version: "2.5.1",
 });
 
 // 1. Quick Wins
@@ -585,13 +585,13 @@ async function main() {
     process.exit(code);
   }
   if (cmd === "--version" || cmd === "-v") {
-    console.log("2.5.0");
+    console.log("2.5.1");
     process.exit(0);
   }
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("GSC MCP server v2.5.0 running on stdio");
+  console.error("GSC MCP server v2.5.1 running on stdio");
 }
 
 main().catch((error) => {
