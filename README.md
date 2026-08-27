@@ -2,11 +2,11 @@
 
 An MCP server for Google Search Console that lets you ask Claude questions about your search data and get real answers. Not raw API rows. Actual analysis.
 
-28 tools. OAuth or service account. Free and open source. Runs on your machine: your data goes straight from this computer to Google, and nothing passes through anyone else's servers.
+29 tools. OAuth or service account. Free and open source. Runs on your machine: your data goes straight from this computer to Google, and nothing passes through anyone else's servers.
 
 > **Full setup guide with screenshots:** [suganthan.com/blog/google-search-console-mcp-server/](https://suganthan.com/blog/google-search-console-mcp-server/)
 
-> **v2.5.0 update (August 2026):** new tool `image_page_audit` closes the image SEO loop. The v2.3 suite tells you which pages fail in image search; this one fetches those pages from your own site and tells you why: alt text, filenames, dimension attributes, lazy loading on the LCP image, formats and weights, the ~250x200 indexing minimum, ImageObject/licensable schema, max-image-preview, and the metadata inside the image files (camera EXIF to strip, IPTC to keep, DigitalSourceType on AI images). It only ever fetches the URLs you give it.
+> **v2.5.0 update (August 2026):** new tool `image_page_audit` closes the image SEO loop. The v2.3 suite tells you which pages fail in image search; this one fetches those pages from your own site and tells you why: alt text, filenames, dimension attributes, lazy loading on the LCP image, formats and weights, the ~250x200 indexing minimum, ImageObject/licensable schema, max-image-preview, and the metadata inside the image files (camera EXIF to strip, IPTC to keep, DigitalSourceType on AI images). It only ever fetches the URLs you give it. Launch post with the whole 8-tool workflow on real client data: ["One Page Earned 102,657 Image Impressions and 2 Clicks"](https://suganthan.com/blog/gsc-mcp-image-seo-tools/).
 
 > **v2.4.0 update (August 2026):** new tool `genai_conversation_queries` finds the AI conversations leaking into your query report. People reply to Google's AI with things like "yes, go on", Google logs every follow-up as a new query, and this tool sorts all of it into seven classified buckets with landing pages and a monthly timeline. Full method and findings: ["Yes, Go On": The AI Conversations Leaking Into Your Search Console](https://suganthan.com/blog/ai-mode-queries-search-console/).
 
