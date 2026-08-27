@@ -1,6 +1,6 @@
 {
   "name": "suganthan-gsc-mcp",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "description": "Google Search Console MCP server for Claude. 28 SEO analysis tools including quick wins, traffic drops, content decay, cannibalisation, CTR opportunities, multi-site dashboards, and a full image-search suite (image keyword overview, image quick wins, web vs image comparison, image pages overview, image keyword trends, image impressions-no-clicks, image content decay). Generative AI conversation-query detection (v2.4). OAuth and service account support.",
   "main": "dist/index.js",
   "bin": {
@@ -31,7 +31,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
     "exifr": "^7.1.3",
-    "googleapis": "^144.0.0",
+    "googleapis": "^176.0.0",
     "image-size": "^2.0.2",
     "node-html-parser": "^9.0.1",
     "open": "^10.1.0",
