@@ -1,12 +1,10 @@
-import { fetchAllRows, getDateRange } from "../analytics.js";
-
-const BENCHMARK_CTR = [0.285, 0.157, 0.110, 0.080, 0.072, 0.051, 0.040, 0.032, 0.028, 0.025];
-
-function benchmarkCtr(pos: number): number {
-  if (pos <= 0) return 0.285;
-  if (pos <= 10) return BENCHMARK_CTR[Math.floor(pos) - 1];
-  return Math.max(0.005, 0.025 - (pos - 10) * 0.002);
-}
+import {
+  fetchAllRows,
+  getDateRange,
+  buildClickCurve,
+  expectedCtr,
+  CtrSource,
+} from "../analytics.js";
 
 interface CtrBenchmarkResult {
   page: string;
@@ -15,6 +13,8 @@ interface CtrBenchmarkResult {
   actualCtr: number;
   position: number;
   benchmarkCtr: number;
+  /** Where the benchmark came from: this property's own curve, or the study table. */
+  benchmarkSource: CtrSource;
   gap: number;
   verdict: string;
 }
@@ -31,13 +31,17 @@ export async function ctrVsBenchmark(
     dimensions: ["page"],
   });
 
+  // Build the curve on the unfiltered rows, otherwise it skews high.
+  const curve = buildClickCurve(rows, "page rows of this request");
+
   const results: CtrBenchmarkResult[] = [];
 
   for (const row of rows) {
     if (row.impressions < minImpressions) continue;
     if (row.position > 20) continue;
 
-    const benchmark = benchmarkCtr(row.position);
+    const expectation = expectedCtr(row.position, curve);
+    const benchmark = expectation.ctr;
     const gap = row.ctr - benchmark;
     const gapPercent = Math.round(gap * 10000) / 100;
 
@@ -59,6 +63,7 @@ export async function ctrVsBenchmark(
       actualCtr: Math.round(row.ctr * 10000) / 100,
       position: Math.round(row.position * 10) / 10,
       benchmarkCtr: Math.round(benchmark * 10000) / 100,
+      benchmarkSource: expectation.source,
       gap: gapPercent,
       verdict,
     });
