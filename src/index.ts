@@ -38,11 +38,21 @@ import { genaiConversationQueries } from "./tools/genai-conversation-queries.js"
 // v2.5: the bridge from "which pages fail in image search" to "why". Fetches
 // the user's own pages and audits the on-page image factors.
 import { imagePageAudit } from "./tools/image-page-audit.js";
+// Surfaces the type filter reaches that the image suite does not cover:
+// Discover (feed-based, no queries) and the searchAppearance dimension.
+import { discoverAnalysis } from "./tools/discover-analysis.js";
+import { searchAppearance } from "./tools/search-appearance.js";
+import { queryCount } from "./tools/query-count.js";
 
 const server = new McpServer({
   name: "gsc-mcp",
   version: "2.5.1",
 });
+
+// Shared GSC surface (search type) parameter. "web" is the API default, so
+// every tool that takes it stays backwards-compatible when it is omitted.
+const SURFACES = ["web", "image", "video", "news", "discover", "googleNews"] as const;
+const surfaceParam = (note: string) => z.enum(SURFACES).default("web").describe(note);
 
 // 1. Quick Wins
 server.tool(
@@ -577,6 +587,72 @@ server.tool(
   }
 );
 
+
+// 30. Discover Analysis (isolated)
+server.tool(
+  "discover_analysis",
+  "Analyse Google Discover performance in isolation (type=discover). Discover is feed-based, not query-based, so this returns top pages, country split and a daily clicks/impressions trend with a prior-period comparison. No query-level data or position exists for Discover." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX,
+  {
+    days: z.number().default(28).describe("Number of days per period to compare"),
+    row_limit: z.number().default(50).describe("Max number of top pages to return"),
+    site_url: z.string().optional().describe("Override the configured property"),
+  },
+  async ({ days, row_limit, site_url }) => {
+    const results = await discoverAnalysis(days, row_limit, site_url);
+    const wrapped = withMeta(results, "discover_analysis", { days, row_limit, site_url });
+    return {
+      content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+  }
+);
+
+// 31. Search Appearance / rich-result types
+server.tool(
+  "search_appearance",
+  "Break down performance by search-appearance / rich-result type (the searchAppearance dimension), e.g. MERCHANT_LISTINGS, PRODUCT_SNIPPETS, REVIEW_SNIPPET, RECIPE_FEATURE. Without an appearance argument it lists all appearance types with their metrics. Pass an appearance value to drill into the pages or queries driving that specific type." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX + POSITION_CAVEAT,
+  {
+    days: z.number().default(28).describe("Number of days to analyse"),
+    appearance: z.string().optional().describe("Appearance type to drill into, e.g. MERCHANT_LISTINGS. Omit for the full breakdown."),
+    drill_dimension: z.enum(["page", "query"]).default("page").describe("When drilling into an appearance, group by page or query"),
+    search_type: surfaceParam("Surface to query the appearance breakdown for"),
+    row_limit: z.number().default(50).describe("Max number of drilldown rows to return"),
+    site_url: z.string().optional().describe("Override the configured property"),
+  },
+  async ({ days, appearance, drill_dimension, search_type, row_limit, site_url }) => {
+    const results = await searchAppearance(days, appearance, drill_dimension, search_type, row_limit, site_url);
+    const wrapped = withMeta(results, "search_appearance", { days, appearance, drill_dimension, search_type, row_limit, site_url });
+    return {
+      content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+  }
+);
+
+// 32. Query Counting
+server.tool(
+  "query_count",
+  "Count how many distinct queries a property, a section or a single URL is visible for, split by position group (1-3, 4-10, 11-20, 21-50, 51+). Scope it with url (one page) or url_contains (a path), turn it into a time series with granularity (day/week/month), and narrow it with min_position/max_position. Also reports the anonymized-click gap: clicks the totals contain but no query row explains, because those queries fall below Google's privacy threshold. The query count is a floor, never the complete keyword set." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX + POSITION_CAVEAT,
+  {
+    days: z.number().default(28).describe("Number of days to analyse"),
+    url: z.string().optional().describe("Count only queries for this exact URL"),
+    url_contains: z.string().optional().describe("Count only queries for URLs containing this string, e.g. /blog/"),
+    granularity: z.enum(["none", "day", "week", "month"]).default("none").describe("Return a time series of query counts. One API request per bucket, so day-level is capped at 90 days."),
+    min_position: z.number().optional().describe("Only count queries at this average position or worse (e.g. 4)"),
+    max_position: z.number().optional().describe("Only count queries at this average position or better (e.g. 10)"),
+    compare_previous: z.boolean().default(true).describe("Also count the immediately preceding period of the same length"),
+    include_pages: z.boolean().default(false).describe("Also rank pages by query count. Expensive: needs the page+query dimension pair, capped at 100k rows."),
+    top_pages: z.number().default(25).describe("How many pages to return when include_pages is true"),
+    surface: surfaceParam("Surface to query: web (default), image, video, news. Discover is NOT supported here (no query dimension)."),
+    device: z.enum(["MOBILE", "DESKTOP", "TABLET"]).optional().describe("Restrict to one device. Omit for all devices, which is the default. Not available on Discover, which carries no device dimension."),
+    country: z.string().optional().describe("Restrict to one country as an ISO-3166-1 alpha-3 code, e.g. deu, usa, gbr. Omit for all countries, which is the default."),
+  },
+  async ({ days, url, url_contains, granularity, min_position, max_position, compare_previous, include_pages, top_pages, surface, device, country }) => {
+    const results = await queryCount(days, compare_previous, include_pages, top_pages, surface, url, url_contains, granularity, min_position, max_position, device, country);
+    const wrapped = withMeta(results, "query_count", { days, url, url_contains, granularity, min_position, max_position, compare_previous, include_pages, top_pages, surface, device, country });
+    return {
+      content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+  }
+);
 async function main() {
   const cmd = process.argv[2];
   if (cmd === "setup") {

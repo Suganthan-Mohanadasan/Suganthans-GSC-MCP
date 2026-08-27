@@ -1,4 +1,10 @@
-import { fetchAllRows, getDateRange, SearchAnalyticsRow } from "../analytics.js";
+import {
+  fetchAllRows,
+  getDateRange,
+  SearchAnalyticsRow,
+  SearchType,
+  assertValidDimensions,
+} from "../analytics.js";
 
 interface Filter {
   dimension: string;
@@ -28,8 +34,12 @@ export async function advancedSearchAnalytics(
   orderBy: string = "clicks",
   orderDirection: string = "descending",
   siteUrl?: string,
-  searchType?: "web" | "image" | "video" | "news" | "discover" | "googleNews"
+  searchType?: SearchType
 ): Promise<AdvancedSearchResult & { searchType: string }> {
+  // Fail with a message that names the offending dimension and the legal set,
+  // rather than passing an illegal combination through to the API's bare 400.
+  assertValidDimensions(searchType ?? "web", dimensions);
+
   const { startDate, endDate } = getDateRange(days);
 
   // Build dimension filter groups from user-provided filters
