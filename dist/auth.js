@@ -79,12 +79,11 @@ function getConfig() {
 }
 async function getServiceAccountClient() {
     const { keyFile } = getConfig();
+    // Same scope set as the OAuth flow, including auth/indexing on the full
+    // tier so submit_url / submit_batch work in service-account mode too (#2).
     const auth = new googleapis_1.google.auth.GoogleAuth({
         keyFile,
-        scopes: [
-            "https://www.googleapis.com/auth/webmasters.readonly",
-            "https://www.googleapis.com/auth/webmasters",
-        ],
+        scopes: (0, oauth_js_1.scopesForTier)((0, oauth_js_1.getScopeTier)()),
     });
     googleapis_1.google.options({ auth });
     return googleapis_1.google.searchconsole("v1");

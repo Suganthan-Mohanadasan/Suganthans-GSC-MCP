@@ -40,7 +40,7 @@ const genai_conversation_queries_js_1 = require("./tools/genai-conversation-quer
 const image_page_audit_js_1 = require("./tools/image-page-audit.js");
 const server = new mcp_js_1.McpServer({
     name: "gsc-mcp",
-    version: "2.5.0",
+    version: "2.5.1",
 });
 // 1. Quick Wins
 server.tool("quick_wins", "Find keywords you're almost ranking for that could be pushed to page one. Returns queries at positions 4-15 with high impressions, sorted by traffic opportunity." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX + guardrails_js_1.POSITION_CAVEAT, {
@@ -402,12 +402,12 @@ async function main() {
         process.exit(code);
     }
     if (cmd === "--version" || cmd === "-v") {
-        console.log("2.5.0");
+        console.log("2.5.1");
         process.exit(0);
     }
     const transport = new stdio_js_1.StdioServerTransport();
     await server.connect(transport);
-    console.error("GSC MCP server v2.5.0 running on stdio");
+    console.error("GSC MCP server v2.5.1 running on stdio");
 }
 main().catch((error) => {
     console.error("Fatal error:", error);
