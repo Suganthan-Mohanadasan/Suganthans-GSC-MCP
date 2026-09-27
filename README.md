@@ -1,5 +1,17 @@
 # Google Search Console MCP Server
 
+[![npm version](https://img.shields.io/npm/v/suganthan-gsc-mcp?style=flat-square&labelColor=24292f&logo=npm&logoColor=white&label=npm&color=305686)](https://www.npmjs.com/package/suganthan-gsc-mcp)
+[![npm downloads](https://img.shields.io/npm/d18m/suganthan-gsc-mcp?style=flat-square&labelColor=24292f&label=downloads&color=305686)](https://www.npmjs.com/package/suganthan-gsc-mcp)
+[![GitHub stars](https://img.shields.io/github/stars/Suganthan-Mohanadasan/Suganthans-GSC-MCP?style=flat-square&labelColor=24292f&logo=github&color=305686)](https://github.com/Suganthan-Mohanadasan/Suganthans-GSC-MCP)
+[![Licence](https://img.shields.io/github/license/Suganthan-Mohanadasan/Suganthans-GSC-MCP?style=flat-square&labelColor=24292f&label=licence&color=305686)](LICENSE)
+[![Node version](https://img.shields.io/node/v/suganthan-gsc-mcp?style=flat-square&labelColor=24292f&logo=nodedotjs&logoColor=white&color=305686)](https://nodejs.org/)
+
+[![MCP server](https://img.shields.io/badge/MCP-server-305686?style=flat-square&labelColor=24292f&logo=modelcontextprotocol&logoColor=white)](https://modelcontextprotocol.io/)
+[![Works with Claude Desktop and Claude Code](https://img.shields.io/badge/Claude-Desktop%20%2B%20Code-305686?style=flat-square&labelColor=24292f&logo=claude&logoColor=white)](#quick-start)
+[![Google Search Console API](https://img.shields.io/badge/Google%20Search%20Console-API-305686?style=flat-square&labelColor=24292f&logo=googlesearchconsole&logoColor=white)](https://developers.google.com/webmaster-tools)
+[![29 tools](https://img.shields.io/badge/tools-29-305686?style=flat-square&labelColor=24292f)](#all-29-tools)
+[![Privacy: local first](https://img.shields.io/badge/privacy-local%20first-305686?style=flat-square&labelColor=24292f&logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI%2BPHJlY3Qgd2lkdGg9IjE4IiBoZWlnaHQ9IjExIiB4PSIzIiB5PSIxMSIgcng9IjIiIHJ5PSIyIi8%2BPHBhdGggZD0iTTcgMTFWN2E1IDUgMCAwIDEgMTAgMHY0Ii8%2BPC9zdmc%2BCg%3D%3D)](#what-makes-this-different-from-other-google-search-console-mcp-servers)
+
 An MCP server for Google Search Console that lets you ask Claude questions about your search data and get real answers. Not raw API rows. Actual analysis.
 
 29 tools. OAuth or service account. Free and open source. Runs on your machine: your data goes straight from this computer to Google, and nothing passes through anyone else's servers.
@@ -284,6 +296,34 @@ Step-by-step setup with screenshots, use cases, and examples:
 
 ## Licence
 
-Apache 2.0
+Apache 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE) for details. Use it, fork it, build on it. Just keep the attribution.
 
-Built by [Suganthan Mohanadasan](https://suganthan.com). If you find it useful, star it.
+---
+
+## Built by Suganthan Mohanadasan
+
+I write about organic search, AI, and the tools I build on [suganthan.com](https://suganthan.com/).
+
+### Posts about this server
+
+| Post | What it covers |
+|---|---|
+| [Google Search Console MCP setup guide](https://suganthan.com/blog/google-search-console-mcp-server/) | Step by step setup with screenshots, for OAuth and service accounts |
+| ["Yes, Go On": The AI Conversations Leaking Into Your Search Console](https://suganthan.com/blog/ai-mode-queries-search-console/) | The research behind `genai_conversation_queries` (v2.4) |
+| [One Page Earned 102,657 Image Impressions and 2 Clicks](https://suganthan.com/blog/gsc-mcp-image-seo-tools/) | The image SEO tools on real client data (v2.3 and v2.5) |
+| [How my MCP calculates average position](https://suganthan.com/notes/gsc-average-position/) | The maths behind every position figure, and how to make Claude prove a number |
+
+### Outgrowing the Search Console API?
+
+The [BigQuery MCP Server](https://github.com/Suganthan-Mohanadasan/Suganthans-BigQuery-MCP-Server) reads your Search Console bulk export instead of the API, so large sites keep the rows the API cuts and you can see how much of your traffic sits behind anonymised queries. It has 33 tools, including ML forecasting, anomaly detection, and GA4 revenue per keyword. [Setup guide](https://suganthan.com/blog/bigquery-mcp-server/).
+
+### Follow along
+
+[![suganthan.com](https://img.shields.io/badge/suganthan.com-305686?style=for-the-badge&logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI%2BPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiLz48cGF0aCBkPSJNMTIgMmExNC41IDE0LjUgMCAwIDAgMCAyMCAxNC41IDE0LjUgMCAwIDAgMC0yMCIvPjxwYXRoIGQ9Ik0yIDEyaDIwIi8%2BPC9zdmc%2BCg%3D%3D)](https://suganthan.com/)
+[![Newsletter](https://img.shields.io/badge/Newsletter-305686?style=for-the-badge&logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI%2BPHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjE2IiB4PSIyIiB5PSI0IiByeD0iMiIvPjxwYXRoIGQ9Im0yMiA3LTguOTcgNS43YTEuOTQgMS45NCAwIDAgMS0yLjA2IDBMMiA3Ii8%2BPC9zdmc%2BCg%3D%3D)](https://suganthan.com/newsletter/)
+[![Suganthan Mohanadasan on LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI%2BPHBhdGggZmlsbD0iI2ZmZiIgZD0iTTIwLjQ0NyAyMC40NTJoLTMuNTU0di01LjU2OWMwLTEuMzI4LS4wMjctMy4wMzctMS44NTItMy4wMzctMS44NTMgMC0yLjEzNiAxLjQ0NS0yLjEzNiAyLjkzOXY1LjY2N0g5LjM1MVY5aDMuNDE0djEuNTYxaC4wNDZjLjQ3Ny0uOSAxLjYzNy0xLjg1IDMuMzctMS44NSAzLjYwMSAwIDQuMjY3IDIuMzcgNC4yNjcgNS40NTV2Ni4yODZ6TTUuMzM3IDcuNDMzYTIuMDYyIDIuMDYyIDAgMDEtMi4wNjMtMi4wNjUgMi4wNjQgMi4wNjQgMCAxMTIuMDYzIDIuMDY1em0xLjc4MiAxMy4wMTlIMy41NTVWOWgzLjU2NHYxMS40NTJ6TTIyLjIyNSAwSDEuNzcxQy43OTIgMCAwIC43NzQgMCAxLjcyOXYyMC41NDJDMCAyMy4yMjcuNzkyIDI0IDEuNzcxIDI0aDIwLjQ1MUMyMy4yIDI0IDI0IDIzLjIyNyAyNCAyMi4yNzFWMS43MjlDMjQgLjc3NCAyMy4yIDAgMjIuMjIyIDBoLjAwM3oiLz48L3N2Zz4K)](https://www.linkedin.com/in/suganthan-mohanadasan/)
+[![Follow @suganthan on X](https://img.shields.io/badge/X-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/suganthan)
+[![Suganthan Mohanadasan on GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Suganthan-Mohanadasan)
+[![Follow Suganthan on Google](https://img.shields.io/badge/Google-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://profile.google.com/cp/Cg0vZy8xMXExX2pkY3Fi)
+
+If you find it useful, star it.
