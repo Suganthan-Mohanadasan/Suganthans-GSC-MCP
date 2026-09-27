@@ -16,7 +16,9 @@ An MCP server for Google Search Console that lets you ask Claude questions about
 
 29 tools. OAuth or service account. Free and open source. Runs on your machine: your data goes straight from this computer to Google, and nothing passes through anyone else's servers.
 
-[![Watch the 30 second demo on YouTube](screenshots/demo-video.jpg)](https://www.youtube.com/watch?v=U0FGD6SXQt8)
+https://github.com/user-attachments/assets/ef131907-4461-4c6a-8080-770f8162dbf2
+
+Also on [YouTube](https://www.youtube.com/watch?v=U0FGD6SXQt8).
 
 > **Full setup guide with screenshots:** [suganthan.com/blog/google-search-console-mcp-server/](https://suganthan.com/blog/google-search-console-mcp-server/)
 
