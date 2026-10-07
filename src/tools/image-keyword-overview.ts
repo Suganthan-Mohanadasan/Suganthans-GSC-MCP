@@ -18,8 +18,7 @@ export async function imageKeywordOverview(
   days: number = 90,
   minImpressions: number = 50,
   rowLimit: number = 50,
-  orderBy: "impressions" | "clicks" | "position" = "impressions",
-  siteUrl?: string
+  orderBy: "impressions" | "clicks" | "position" = "impressions"
 ): Promise<ImageKeywordRow[]> {
   const { startDate, endDate } = getDateRange(days);
 
@@ -28,7 +27,7 @@ export async function imageKeywordOverview(
     endDate,
     dimensions: ["query"],
     type: "image",
-  }, siteUrl);
+  });
 
   const filtered = rows.filter((r) => r.impressions >= minImpressions);
 

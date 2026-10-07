@@ -36,8 +36,7 @@ function expectedImageCtrAtPosition(pos: number): number {
 export async function imageSearchQuickWins(
   days: number = 90,
   minImpressions: number = 500,
-  maxPosition: number = 15,
-  siteUrl?: string
+  maxPosition: number = 15
 ): Promise<ImageQuickWin[]> {
   const { startDate, endDate } = getDateRange(days);
 
@@ -46,7 +45,7 @@ export async function imageSearchQuickWins(
     endDate,
     dimensions: ["query"],
     type: "image",
-  }, siteUrl);
+  });
 
   const wins: ImageQuickWin[] = [];
 

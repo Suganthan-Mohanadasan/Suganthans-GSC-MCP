@@ -5,6 +5,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 
 import { GUARDRAIL_SUFFIX, VISUAL_SUFFIX, POSITION_CAVEAT, withMeta } from "./guardrails.js";
+import { withSiteUrl } from "./auth.js";
 import { quickWins } from "./tools/quick-wins.js";
 import { ctrOpportunities } from "./tools/ctr-opportunities.js";
 import { trafficDrops } from "./tools/traffic-drops.js";
@@ -43,6 +44,30 @@ const server = new McpServer({
   name: "gsc-mcp",
   version: "2.5.1",
 });
+
+// Every tool that queries a property takes an optional `site_url`. The wrapper
+// adds it to the schema and runs the handler inside withSiteUrl(), so
+// getConfig() returns it for the whole call. Excluded: tools with no property
+// in play: the Indexing API (URL-based), image_page_audit (fetches pages
+// directly) and multi_site_dashboard (takes site_urls).
+const SITE_URL_PARAM = z
+  .string()
+  .optional()
+  .describe(
+    "GSC property for this call, e.g. sc-domain:example.com or https://www.example.com/. " +
+    "Omit to use the default property (GSC_SITE_URL). Your credentials must have access to it."
+  );
+const NO_PROPERTY_TOOLS = new Set(["multi_site_dashboard", "submit_url", "submit_batch", "image_page_audit"]);
+
+const registerTool = server.tool.bind(server);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(server as { tool: unknown }).tool = (name: string, description: string, schema: any, handler: any) => {
+  if (NO_PROPERTY_TOOLS.has(name)) return registerTool(name, description, schema, handler);
+  const wrapped = (args: { site_url?: string }, extra: unknown) =>
+    withSiteUrl(args?.site_url, () => handler(args, extra));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return registerTool(name, description, { ...schema, site_url: SITE_URL_PARAM }, wrapped as any);
+};
 
 // 1. Quick Wins
 server.tool(
@@ -245,11 +270,10 @@ server.tool(
     row_limit: z.number().default(100).describe("Maximum rows to return (max 500)"),
     order_by: z.string().default("clicks").describe("Sort by: clicks, impressions, ctr, position"),
     order_direction: z.string().default("descending").describe("Sort direction: ascending, descending"),
-    site_url: z.string().optional().describe("Override the default site URL"),
     search_type: z.enum(["web", "image", "video", "news", "discover", "googleNews"]).optional().describe("Filter by GSC search surface. Defaults to web. Use 'image' to query Google Images data."),
   },
-  async ({ days, dimensions, filters, row_limit, order_by, order_direction, site_url, search_type }) => {
-    const results = await advancedSearchAnalytics(days, dimensions, filters, row_limit, order_by, order_direction, site_url, search_type);
+  async ({ days, dimensions, filters, row_limit, order_by, order_direction, search_type }) => {
+    const results = await advancedSearchAnalytics(days, dimensions, filters, row_limit, order_by, order_direction, search_type);
     const wrapped = withMeta(results, "advanced_search_analytics", { days, dimensions, filters, row_limit, order_by, search_type });
     return {
       content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
@@ -406,11 +430,10 @@ server.tool(
     min_impressions: z.number().default(50).describe("Minimum impressions threshold"),
     row_limit: z.number().default(50).describe("Maximum rows to return"),
     order_by: z.enum(["impressions", "clicks", "position"]).default("impressions").describe("Sort field"),
-    site_url: z.string().optional().describe("Override the configured property (e.g. sc-domain:example.com or https://www.example.com/)"),
   },
-  async ({ days, min_impressions, row_limit, order_by, site_url }) => {
-    const results = await imageKeywordOverview(days, min_impressions, row_limit, order_by, site_url);
-    const wrapped = withMeta(results, "image_keyword_overview", { days, min_impressions, row_limit, order_by, site_url });
+  async ({ days, min_impressions, row_limit, order_by }) => {
+    const results = await imageKeywordOverview(days, min_impressions, row_limit, order_by);
+    const wrapped = withMeta(results, "image_keyword_overview", { days, min_impressions, row_limit, order_by });
     return {
       content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };
@@ -425,11 +448,10 @@ server.tool(
     days: z.number().default(90).describe("Number of days to analyse"),
     min_impressions: z.number().default(500).describe("Minimum impressions threshold"),
     max_position: z.number().default(15).describe("Maximum position to include"),
-    site_url: z.string().optional().describe("Override the configured property (e.g. sc-domain:example.com or https://www.example.com/)"),
   },
-  async ({ days, min_impressions, max_position, site_url }) => {
-    const results = await imageSearchQuickWins(days, min_impressions, max_position, site_url);
-    const wrapped = withMeta(results, "image_search_quick_wins", { days, min_impressions, max_position, site_url });
+  async ({ days, min_impressions, max_position }) => {
+    const results = await imageSearchQuickWins(days, min_impressions, max_position);
+    const wrapped = withMeta(results, "image_search_quick_wins", { days, min_impressions, max_position });
     return {
       content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };
@@ -444,11 +466,10 @@ server.tool(
     days: z.number().default(90).describe("Number of days to analyse"),
     min_combined_impressions: z.number().default(100).describe("Minimum combined (web + image) impressions to include the query"),
     row_limit: z.number().default(50).describe("Maximum rows to return"),
-    site_url: z.string().optional().describe("Override the configured property (e.g. sc-domain:example.com or https://www.example.com/)"),
   },
-  async ({ days, min_combined_impressions, row_limit, site_url }) => {
-    const results = await compareWebVsImage(days, min_combined_impressions, row_limit, site_url);
-    const wrapped = withMeta(results, "compare_web_vs_image", { days, min_combined_impressions, row_limit, site_url });
+  async ({ days, min_combined_impressions, row_limit }) => {
+    const results = await compareWebVsImage(days, min_combined_impressions, row_limit);
+    const wrapped = withMeta(results, "compare_web_vs_image", { days, min_combined_impressions, row_limit });
     return {
       content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };
@@ -464,11 +485,10 @@ server.tool(
     min_impressions: z.number().default(100).describe("Minimum impressions threshold"),
     row_limit: z.number().default(50).describe("Maximum rows to return"),
     order_by: z.enum(["impressions", "clicks", "position"]).default("clicks").describe("Sort field"),
-    site_url: z.string().optional().describe("Override the configured property (e.g. sc-domain:example.com or https://www.example.com/)"),
   },
-  async ({ days, min_impressions, row_limit, order_by, site_url }) => {
-    const results = await imagePagesOverview(days, min_impressions, row_limit, order_by, site_url);
-    const wrapped = withMeta(results, "image_pages_overview", { days, min_impressions, row_limit, order_by, site_url });
+  async ({ days, min_impressions, row_limit, order_by }) => {
+    const results = await imagePagesOverview(days, min_impressions, row_limit, order_by);
+    const wrapped = withMeta(results, "image_pages_overview", { days, min_impressions, row_limit, order_by });
     return {
       content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };
@@ -484,11 +504,10 @@ server.tool(
     min_combined_impressions: z.number().default(100).describe("Minimum combined impressions across both windows"),
     row_limit: z.number().default(50).describe("Maximum rows to return"),
     order_by: z.enum(["impressions_delta", "position_delta"]).default("impressions_delta").describe("Sort field"),
-    site_url: z.string().optional().describe("Override the configured property (e.g. sc-domain:example.com or https://www.example.com/)"),
   },
-  async ({ days, min_combined_impressions, row_limit, order_by, site_url }) => {
-    const results = await imageKeywordTrends(days, min_combined_impressions, row_limit, order_by, site_url);
-    const wrapped = withMeta(results, "image_keyword_trends", { days, min_combined_impressions, row_limit, order_by, site_url });
+  async ({ days, min_combined_impressions, row_limit, order_by }) => {
+    const results = await imageKeywordTrends(days, min_combined_impressions, row_limit, order_by);
+    const wrapped = withMeta(results, "image_keyword_trends", { days, min_combined_impressions, row_limit, order_by });
     return {
       content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };
@@ -504,11 +523,10 @@ server.tool(
     min_impressions: z.number().default(500).describe("Minimum impressions threshold"),
     max_clicks: z.number().default(2).describe("Maximum clicks (filter to pages stuck in the impressions-no-clicks pattern)"),
     row_limit: z.number().default(50).describe("Maximum rows to return"),
-    site_url: z.string().optional().describe("Override the configured property (e.g. sc-domain:example.com or https://www.example.com/)"),
   },
-  async ({ days, min_impressions, max_clicks, row_limit, site_url }) => {
-    const results = await imageImpressionsNoClicks(days, min_impressions, max_clicks, row_limit, site_url);
-    const wrapped = withMeta(results, "image_impressions_no_clicks", { days, min_impressions, max_clicks, row_limit, site_url });
+  async ({ days, min_impressions, max_clicks, row_limit }) => {
+    const results = await imageImpressionsNoClicks(days, min_impressions, max_clicks, row_limit);
+    const wrapped = withMeta(results, "image_impressions_no_clicks", { days, min_impressions, max_clicks, row_limit });
     return {
       content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };
@@ -521,11 +539,10 @@ server.tool(
   "Image-search version of content_decay. Three 30-day windows, flags pages with a consistent decline across all three. Defaults to a lower minimum click threshold than the web equivalent because image search produces lower click volumes overall." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX + POSITION_CAVEAT,
   {
     min_period3_clicks: z.number().default(5).describe("Minimum image-search clicks in the oldest 30-day window required for a page to be considered"),
-    site_url: z.string().optional().describe("Override the configured property (e.g. sc-domain:example.com or https://www.example.com/)"),
   },
-  async ({ min_period3_clicks, site_url }) => {
-    const results = await imageContentDecay(min_period3_clicks, site_url);
-    const wrapped = withMeta(results, "image_content_decay", { min_period3_clicks, site_url });
+  async ({ min_period3_clicks }) => {
+    const results = await imageContentDecay(min_period3_clicks);
+    const wrapped = withMeta(results, "image_content_decay", { min_period3_clicks });
     return {
       content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };
@@ -541,11 +558,10 @@ server.tool(
     min_impressions: z.number().default(1).describe("Minimum impressions for a query to be listed (single-impression rows are evidence, not noise, so the default keeps them)"),
     max_rows_per_bucket: z.number().default(50).describe("Maximum rows returned per bucket; totals always cover everything"),
     include_timeline: z.boolean().default(true).describe("Include the monthly artefact timeline (one extra API call)"),
-    site_url: z.string().optional().describe("Override the configured property (e.g. sc-domain:example.com)"),
   },
-  async ({ days, min_impressions, max_rows_per_bucket, include_timeline, site_url }) => {
-    const results = await genaiConversationQueries(days, min_impressions, max_rows_per_bucket, include_timeline, site_url);
-    const wrapped = withMeta(results, "genai_conversation_queries", { days, min_impressions, max_rows_per_bucket, include_timeline, site_url });
+  async ({ days, min_impressions, max_rows_per_bucket, include_timeline }) => {
+    const results = await genaiConversationQueries(days, min_impressions, max_rows_per_bucket, include_timeline);
+    const wrapped = withMeta(results, "genai_conversation_queries", { days, min_impressions, max_rows_per_bucket, include_timeline });
     return {
       content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };

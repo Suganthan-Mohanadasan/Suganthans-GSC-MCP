@@ -1,6 +1,7 @@
 import { google } from "googleapis";
 import { searchconsole_v1 } from "googleapis";
 import * as fs from "fs";
+import { AsyncLocalStorage } from "node:async_hooks";
 import { authenticateWithOAuth, getScopeTier, scopesForTier } from "./oauth.js";
 
 let cachedClient: searchconsole_v1.Searchconsole | null = null;
@@ -13,9 +14,29 @@ export function getAuthMode(): AuthMode {
   return "service_account";
 }
 
+// Per-call property override. index.ts sets it from a tool's `site_url`
+// argument for the duration of that call; getConfig() then returns it as
+// siteUrl, so nested calls (fetchAllRows, inspectUrl, generate_report) use
+// the chosen property without every tool function threading it through.
+const siteUrlContext = new AsyncLocalStorage<string>();
+
+export function withSiteUrl<T>(siteUrl: string | undefined, fn: () => T): T {
+  const trimmed = siteUrl?.trim();
+  return trimmed ? siteUrlContext.run(trimmed, fn) : fn();
+}
+
+/** The property this call runs against, without throwing (for _meta). */
+export function currentSiteUrl(): string | undefined {
+  return (
+    siteUrlContext.getStore() ||
+    process.env.GSC_SITE_URL ||
+    process.env.GSC_SITE_URLS?.split(",").map((s) => s.trim()).find(Boolean)
+  );
+}
+
 export function getConfig() {
   const mode = getAuthMode();
-  const siteUrl = process.env.GSC_SITE_URL;
+  const siteUrl = siteUrlContext.getStore() || process.env.GSC_SITE_URL;
   const siteUrls = process.env.GSC_SITE_URLS
     ? process.env.GSC_SITE_URLS.split(",").map((s) => s.trim()).filter(Boolean)
     : siteUrl

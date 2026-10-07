@@ -27,8 +27,7 @@ export async function imageKeywordTrends(
   days: number = 28,
   minCombinedImpressions: number = 100,
   rowLimit: number = 50,
-  orderBy: "impressions_delta" | "position_delta" = "impressions_delta",
-  siteUrl?: string
+  orderBy: "impressions_delta" | "position_delta" = "impressions_delta"
 ): Promise<TrendRow[]> {
   const current = getDateRange(days);
   const prior = getPriorDateRange(days);
@@ -39,13 +38,13 @@ export async function imageKeywordTrends(
       endDate: current.endDate,
       dimensions: ["query"],
       type: "image",
-    }, siteUrl),
+    }),
     fetchAllRows({
       startDate: prior.startDate,
       endDate: prior.endDate,
       dimensions: ["query"],
       type: "image",
-    }, siteUrl),
+    }),
   ]);
 
   const toMap = (rows: SearchAnalyticsRow[]): Map<string, SearchAnalyticsRow> => {

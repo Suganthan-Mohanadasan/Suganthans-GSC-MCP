@@ -27,7 +27,6 @@ export async function advancedSearchAnalytics(
   rowLimit: number = 100,
   orderBy: string = "clicks",
   orderDirection: string = "descending",
-  siteUrl?: string,
   searchType?: "web" | "image" | "video" | "news" | "discover" | "googleNews"
 ): Promise<AdvancedSearchResult & { searchType: string }> {
   const { startDate, endDate } = getDateRange(days);
@@ -50,8 +49,7 @@ export async function advancedSearchAnalytics(
       dimensions,
       dimensionFilterGroups,
       type: searchType,
-    },
-    siteUrl
+    }
   );
 
   // Sort

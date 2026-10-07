@@ -123,8 +123,7 @@ export async function genaiConversationQueries(
   days: number = 480,
   minImpressions: number = 1,
   maxRowsPerBucket: number = 50,
-  includeTimeline: boolean = true,
-  siteUrl?: string
+  includeTimeline: boolean = true
 ) {
   const { startDate, endDate } = getDateRange(days);
   const prefilter = [
@@ -153,8 +152,7 @@ export async function genaiConversationQueries(
         },
       ],
       type: "web",
-    },
-    siteUrl
+    }
   );
 
   // Aggregate per query (rows arrive per query x page).
@@ -235,8 +233,7 @@ export async function genaiConversationQueries(
           },
         ],
         type: "web",
-      },
-      siteUrl
+      }
     );
     const monthly = new Map<string, { impressions: number; clicks: number }>();
     for (const r of dateRows) {

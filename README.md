@@ -181,7 +181,7 @@ For multiple properties, add `GSC_SITE_URLS`:
 }
 ```
 
-You can also point a single query at any property your credentials can see without touching the config: `advanced_search_analytics`, `genai_conversation_queries`, and all 7 image-search analysis tools take an optional `site_url` parameter. "Which pages get image impressions but no clicks on sc-domain:secondsite.com?" just works.
+You can also point a single call at any property your credentials can see without touching the config: every tool that queries a property takes an optional `site_url` parameter, `quick_wins` and `inspect_url` included. Only `submit_url` and `submit_batch` (the Indexing API is URL-based), `image_page_audit` (fetches pages directly) and `multi_site_dashboard` (takes `site_urls`) go without it. Each result names the property it ran against in `_meta.site_url`. "Which pages get image impressions but no clicks on sc-domain:secondsite.com?" just works.
 
 ## All 29 tools
 

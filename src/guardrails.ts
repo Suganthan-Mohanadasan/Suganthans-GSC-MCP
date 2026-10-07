@@ -8,6 +8,8 @@
  * Inspired by feedback from Krinal Mehta (https://www.linkedin.com/in/krinal/)
  */
 
+import { currentSiteUrl } from "./auth.js";
+
 export const GUARDRAIL_SUFFIX =
   " IMPORTANT: Base your analysis ONLY on the data returned. Report exact numbers from the results. Do not speculate about causes (e.g. algorithm updates, competitor actions) unless the data explicitly supports it. If the data does not contain enough information to answer a question, say so clearly rather than guessing.";
 
@@ -31,6 +33,7 @@ export function withMeta(
   _meta: {
     source: string;
     tool: string;
+    site_url: string | undefined;
     parameters: Record<string, unknown>;
     note: string;
   };
@@ -40,6 +43,7 @@ export function withMeta(
     _meta: {
       source,
       tool: toolName,
+      site_url: currentSiteUrl(),
       parameters: params,
       note,
     },

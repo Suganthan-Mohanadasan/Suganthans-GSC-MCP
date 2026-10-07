@@ -22,8 +22,7 @@ export async function imageImpressionsNoClicks(
   days: number = 90,
   minImpressions: number = 500,
   maxClicks: number = 2,
-  rowLimit: number = 50,
-  siteUrl?: string
+  rowLimit: number = 50
 ): Promise<NoClickRow[]> {
   const { startDate, endDate } = getDateRange(days);
 
@@ -32,7 +31,7 @@ export async function imageImpressionsNoClicks(
     endDate,
     dimensions: ["query", "page"],
     type: "image",
-  }, siteUrl);
+  });
 
   const filtered = rows.filter(
     (r) => r.impressions >= minImpressions && r.clicks <= maxClicks
