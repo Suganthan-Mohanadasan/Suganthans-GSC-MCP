@@ -298,7 +298,7 @@ server.tool(
   "generate_report",
   "Generate a comprehensive markdown performance report. Covers site snapshot, alerts, quick wins, traffic drops, content decay, and recommendations. Saves to disk for weekly reviews or scheduled reporting." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX,
   {
-    output_path: z.string().optional().describe("File path to save the report (default: ./gsc-report-{date}.md)"),
+    output_path: z.string().optional().describe("File name for the report, no folders (default: gsc-report-{date}.md). Saved in GSC_REPORT_DIR or the server's working directory; an existing file is never overwritten."),
     days: z.number().default(28).describe("Number of days to analyse"),
     include_sections: z.array(z.string()).optional().describe("Sections: snapshot, alerts, quick_wins, traffic_drops, content_decay, recommendations"),
   },

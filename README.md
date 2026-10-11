@@ -235,6 +235,11 @@ These tools pass `type=image` to the GSC Search Analytics API, which most third-
 |---|---|
 | `verify_claim` | Self-check: re-queries GSC data to verify a numeric claim before presenting it |
 
+**Fetch and file limits.** Two tools touch more than the Search Console API, and both are bounded so an agent steered by prompt-injected content cannot turn them against the machine they run on:
+
+- `image_page_audit` only audits pages on a Search Console property this account can see (plus any set in `GSC_SITE_URL` / `GSC_SITE_URLS`). Images may come from any host, but no request and no redirect hop may go to a private, loopback, link-local or otherwise non-public address, and page and image bodies are size-capped. Refused URLs come back as `fetch_refused` with the reason.
+- `generate_report` takes a file name, not a path. Reports go into `GSC_REPORT_DIR` (or the server's working directory) and never overwrite an existing file.
+
 ## What makes this different from other Google Search Console MCP servers
 
 **Analysis, not just API access.** Most Google Search Console MCP servers wrap the raw API. This one ships with pre-built analysis: opportunity scoring, cannibalisation detection, decay tracking, CTR benchmarking, traffic drop diagnosis. You ask a question, it runs the analysis and tells you what to do.
@@ -260,6 +265,7 @@ These tools pass `type=image` to the GSC Search Analytics API, which most third-
 | `GSC_OAUTH_CLIENT_SECRET` | OAuth mode (alt) | OAuth client secret |
 | `GSC_SITE_URL` | Yes | Primary GSC property URL |
 | `GSC_SITE_URLS` | No | Comma-separated list for multi-site |
+| `GSC_REPORT_DIR` | No | Folder `generate_report` writes into (default: the server's working directory) |
 | `GSC_SCOPES` | No | `readonly` or `full` (default: `full`). Read only keeps the Google consent to a single view permission; submission tools then explain how to upgrade |
 
 ## Full guide
