@@ -2,6 +2,7 @@ import { inspectUrl, InspectionResult } from "../inspection.js";
 
 interface InspectionSummary {
   url: string;
+  siteUrl: string;
   indexed: boolean;
   indexingState: string;
   lastCrawlTime: string | null;
@@ -14,6 +15,7 @@ interface InspectionSummary {
   mobileUsability: string;
   issues: string[];
   summary: string;
+  note?: string;
 }
 
 export async function inspectUrlTool(url: string): Promise<InspectionSummary> {
@@ -35,6 +37,7 @@ export async function inspectUrlTool(url: string): Promise<InspectionSummary> {
 
   return {
     url,
+    siteUrl: result.siteUrl,
     indexed: result.indexed,
     indexingState: result.indexingState,
     lastCrawlTime: result.lastCrawlTime,
@@ -47,5 +50,6 @@ export async function inspectUrlTool(url: string): Promise<InspectionSummary> {
     mobileUsability: result.mobileUsability,
     issues: result.issues,
     summary,
+    ...(result.note && { note: result.note }),
   };
 }
