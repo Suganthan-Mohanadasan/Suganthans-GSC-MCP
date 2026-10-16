@@ -1,6 +1,9 @@
+import { searchconsole_v1 } from "googleapis";
 import { getSearchConsoleClient, getConfig } from "./auth.js";
+import { propertyCandidates, fallbackNote, permissionHint } from "./property-candidates.js";
 
 export interface InspectionResult {
+  siteUrl: string;
   indexed: boolean;
   indexingState: string;
   lastCrawlTime: string | null;
@@ -14,19 +17,38 @@ export interface InspectionResult {
   mobileUsability: string;
   verdict: string;
   issues: string[];
+  note?: string;
 }
 
 export async function inspectUrl(url: string): Promise<InspectionResult> {
   const client = await getSearchConsoleClient();
-  const { siteUrl } = getConfig();
+  const { siteUrl: configSiteUrl } = getConfig();
+  const candidates = propertyCandidates(configSiteUrl);
 
-  const response = await client.urlInspection.index.inspect({
-    requestBody: {
-      inspectionUrl: url,
-      siteUrl,
-    },
-  });
+  let response: { data: searchconsole_v1.Schema$InspectUrlIndexResponse } | undefined;
+  let usedSiteUrl = configSiteUrl;
+  let firstError: any = null;
 
+  for (const property of candidates) {
+    try {
+      response = await client.urlInspection.index.inspect({
+        requestBody: {
+          inspectionUrl: url,
+          siteUrl: property,
+        },
+      });
+      usedSiteUrl = property;
+      break;
+    } catch (err: any) {
+      if (!firstError) firstError = err;
+    }
+  }
+
+  if (!response) {
+    throw new Error((firstError?.message || String(firstError)) + permissionHint(candidates));
+  }
+
+  const note = fallbackNote(usedSiteUrl, configSiteUrl);
   const result = response.data.inspectionResult;
   const indexStatus = result?.indexStatusResult;
   const mobileResult = result?.mobileUsabilityResult;
@@ -60,6 +82,7 @@ export async function inspectUrl(url: string): Promise<InspectionResult> {
   }
 
   return {
+    siteUrl: usedSiteUrl,
     indexed: indexStatus?.coverageState === "Submitted and indexed" ||
              indexStatus?.verdict === "PASS",
     indexingState: indexStatus?.coverageState || "Unknown",
@@ -74,5 +97,6 @@ export async function inspectUrl(url: string): Promise<InspectionResult> {
     mobileUsability: mobileResult?.verdict || "Unknown",
     verdict: indexStatus?.verdict || "Unknown",
     issues,
+    ...(note && { note }),
   };
 }

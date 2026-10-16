@@ -1,5 +1,6 @@
 import { getSearchConsoleClient, getConfig, getAuthMode } from "../auth.js";
 import { getScopeTier } from "../oauth.js";
+import { propertyCandidates as sitemapPropertyCandidates, fallbackNote, permissionHint } from "../property-candidates.js";
 
 interface SitemapSubmitResult {
   siteUrl: string;
@@ -23,41 +24,11 @@ interface SitemapListResult {
   note?: string;
 }
 
-/**
- * The Sitemaps API accepts sc-domain: properties directly, so the configured
- * property is always tried as-is first (#7). The URL-prefix conversions stay
- * on as fallbacks for accounts where the permission actually lives on a
- * matching URL-prefix property rather than the domain property.
- */
-function sitemapPropertyCandidates(siteUrl: string): string[] {
-  if (siteUrl.startsWith("sc-domain:")) {
-    const domain = siteUrl.replace("sc-domain:", "");
-    return [siteUrl, `https://${domain}/`, `https://www.${domain}/`];
-  }
-  return [siteUrl];
-}
-
 function defaultSitemapUrl(property: string): string {
   if (property.startsWith("sc-domain:")) {
     return `https://${property.replace("sc-domain:", "")}/sitemap.xml`;
   }
   return `${property}sitemap.xml`;
-}
-
-function fallbackNote(used: string, configured: string): string | undefined {
-  if (used === configured) return undefined;
-  return (
-    `The configured property (${configured}) rejected the call, so the ` +
-    `URL-prefix property (${used}) was used instead. The results belong to ` +
-    `that property, which may differ from the domain property's own sitemap list.`
-  );
-}
-
-function permissionHint(candidates: string[]): string {
-  return (
-    ` Tried: ${candidates.join(", ")}. Check that the authenticated account ` +
-    `has sitemap permission on the property in Search Console.`
-  );
 }
 
 export async function submitSitemap(sitemapUrl?: string): Promise<SitemapSubmitResult> {
