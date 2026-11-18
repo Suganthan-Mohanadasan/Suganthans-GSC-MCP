@@ -8,21 +8,81 @@ export interface SearchAnalyticsRow {
   position: number;
 }
 
+export interface DimensionFilter {
+  dimension: string;
+  operator: string;
+  expression: string;
+}
+
+// Multi-value filter (API field `filterLists`, added November 2026). A row
+// matches when its value equals ANY of the expressions. Google accepts only
+// `country` and `device` here, and rejects a request that filters the same
+// dimension in both `filters` and `filterLists`.
+export interface DimensionFilterList {
+  dimension: string;
+  expressions: string[];
+}
+
+export type SearchType =
+  | "web"
+  | "image"
+  | "video"
+  | "news"
+  | "discover"
+  | "googleNews"
+  | "webMultimodal";
+
+// First date with branded / non-branded data in the API.
+export const BRANDED_DATA_START = "2026-02-21";
+
 export interface QueryParams {
   startDate: string;
   endDate: string;
   dimensions: string[];
   dimensionFilterGroups?: Array<{
-    filters: Array<{
-      dimension: string;
-      operator: string;
-      expression: string;
-    }>;
+    filters?: DimensionFilter[];
+    filterLists?: DimensionFilterList[];
   }>;
   rowLimit?: number;
-  // GSC Search Analytics `type` filter. Values: web (default), image, video,
-  // news, discover, googleNews. Added in v2.3 to unlock image-search data.
-  type?: "web" | "image" | "video" | "news" | "discover" | "googleNews";
+  // GSC Search Analytics `type` filter. Defaults server-side to web.
+  // `webMultimodal` (Google Lens, Circle to Search, image uploads) cannot be
+  // grouped or filtered by query or brandedClassification.
+  type?: SearchType;
+}
+
+/**
+ * Builds the single AND filter group the API supports from single-value
+ * filters and multi-value filter lists. Country codes are lower-cased and
+ * device names upper-cased in filter lists, which is the form the API matches.
+ */
+export function buildFilterGroups(
+  filters: DimensionFilter[] = [],
+  filterLists: DimensionFilterList[] = []
+): QueryParams["dimensionFilterGroups"] {
+  if (filters.length === 0 && filterLists.length === 0) return undefined;
+  return [
+    {
+      ...(filters.length > 0
+        ? {
+            filters: filters.map((f) => ({
+              dimension: f.dimension,
+              operator: f.operator,
+              expression: f.expression,
+            })),
+          }
+        : {}),
+      ...(filterLists.length > 0
+        ? {
+            filterLists: filterLists.map((l) => ({
+              dimension: l.dimension,
+              expressions: l.expressions.map((e) =>
+                l.dimension === "device" ? e.toUpperCase() : e.toLowerCase()
+              ),
+            })),
+          }
+        : {}),
+    },
+  ];
 }
 
 function formatDate(date: Date): string {

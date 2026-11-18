@@ -38,6 +38,17 @@ const genai_conversation_queries_js_1 = require("./tools/genai-conversation-quer
 // v2.5: the bridge from "which pages fail in image search" to "why". Fetches
 // the user's own pages and audits the on-page image factors.
 const image_page_audit_js_1 = require("./tools/image-page-audit.js");
+// Search Analytics API additions of November 2026: branded classification,
+// multimodal search (type=webMultimodal) and multi-value filter lists.
+const branded_vs_non_branded_js_1 = require("./tools/branded-vs-non-branded.js");
+const multimodal_search_overview_js_1 = require("./tools/multimodal-search-overview.js");
+const filterListsSchema = zod_1.z
+    .array(zod_1.z.object({
+    dimension: zod_1.z.enum(["country", "device"]).describe("Dimension to filter. Google accepts only country and device here"),
+    expressions: zod_1.z.array(zod_1.z.string()).min(1).describe("Values to match (OR). Country: ISO 3166-1 alpha-3 codes such as usa, gbr, deu. Device: DESKTOP, MOBILE, TABLET"),
+}))
+    .default([])
+    .describe("Multi-value filters: keep rows matching ANY listed value, e.g. [{dimension:'country',expressions:['deu','aut','che']}]. A dimension cannot appear in both filters and filter_lists");
 const server = new mcp_js_1.McpServer({
     name: "gsc-mcp",
     version: "2.5.1",
@@ -163,11 +174,11 @@ server.tool("verify_claim", "Verify a specific numeric claim against live GSC da
     };
 });
 // 12. Advanced Search Analytics
-server.tool("advanced_search_analytics", "Run a custom search analytics query with flexible dimensions and filters. Supports country, device, query, and page filtering, plus search type (web/image/video/news/discover/googleNews). For power users who need specific data cuts." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX + guardrails_js_1.POSITION_CAVEAT, {
+server.tool("advanced_search_analytics", "Run a custom search analytics query with flexible dimensions and filters. Supports country, device, query, page, searchAppearance and brandedClassification, multi-country / multi-device filter lists, and search type (web/image/video/news/discover/googleNews/webMultimodal). Google rejects some combinations: brandedClassification cannot be combined with a query filter, and webMultimodal cannot be grouped or filtered by query or brandedClassification. For power users who need specific data cuts." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX + guardrails_js_1.POSITION_CAVEAT, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
-    dimensions: zod_1.z.array(zod_1.z.string()).default(["query"]).describe("Dimensions to group by: query, page, country, device, date"),
+    dimensions: zod_1.z.array(zod_1.z.string()).default(["query"]).describe("Dimensions to group by: query, page, country, device, date, searchAppearance, brandedClassification (BRANDED / NON_BRANDED, data from 2026-02-21, eligible top-level properties only)"),
     filters: zod_1.z.array(zod_1.z.object({
-        dimension: zod_1.z.string().describe("Dimension to filter: query, page, country, device"),
+        dimension: zod_1.z.string().describe("Dimension to filter: query, page, country, device, searchAppearance, brandedClassification (equals BRANDED or NON_BRANDED only)"),
         operator: zod_1.z.string().describe("Operator: contains, notContains, equals, notEquals, includingRegex, excludingRegex"),
         expression: zod_1.z.string().describe("Filter value"),
     })).default([]).describe("Dimension filters to apply"),
@@ -175,10 +186,11 @@ server.tool("advanced_search_analytics", "Run a custom search analytics query wi
     order_by: zod_1.z.string().default("clicks").describe("Sort by: clicks, impressions, ctr, position"),
     order_direction: zod_1.z.string().default("descending").describe("Sort direction: ascending, descending"),
     site_url: zod_1.z.string().optional().describe("Override the default site URL"),
-    search_type: zod_1.z.enum(["web", "image", "video", "news", "discover", "googleNews"]).optional().describe("Filter by GSC search surface. Defaults to web. Use 'image' to query Google Images data."),
-}, async ({ days, dimensions, filters, row_limit, order_by, order_direction, site_url, search_type }) => {
-    const results = await (0, advanced_search_analytics_js_1.advancedSearchAnalytics)(days, dimensions, filters, row_limit, order_by, order_direction, site_url, search_type);
-    const wrapped = (0, guardrails_js_1.withMeta)(results, "advanced_search_analytics", { days, dimensions, filters, row_limit, order_by, search_type });
+    search_type: zod_1.z.enum(["web", "image", "video", "news", "discover", "googleNews", "webMultimodal"]).optional().describe("Filter by GSC search surface. Defaults to web. Use 'image' for Google Images, 'webMultimodal' for Google Lens, Circle to Search and image uploads."),
+    filter_lists: filterListsSchema,
+}, async ({ days, dimensions, filters, row_limit, order_by, order_direction, site_url, search_type, filter_lists }) => {
+    const results = await (0, advanced_search_analytics_js_1.advancedSearchAnalytics)(days, dimensions, filters, row_limit, order_by, order_direction, site_url, search_type, filter_lists);
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "advanced_search_analytics", { days, dimensions, filters, filter_lists, row_limit, order_by, search_type });
     return {
         content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };
@@ -390,6 +402,34 @@ server.tool("image_page_audit", "Fetches pages from YOUR OWN site and audits eve
 }, async ({ urls, fetch_metadata, max_images_per_page, max_images_reported }) => {
     const results = await (0, image_page_audit_js_1.imagePageAudit)(urls, fetch_metadata, max_images_per_page, max_images_reported);
     const wrapped = (0, guardrails_js_1.withMeta)(results, "image_page_audit", { urls, fetch_metadata, max_images_per_page, max_images_reported }, "Live fetch of the audited pages (the user's own site)", "All findings come from fetching and parsing the listed pages and image files at call time. Alt text, attributes, bytes, and dimensions are read values, not estimates. Base your analysis only on this data. An empty alt (alt=\"\") is correct for decorative images; do not report it as a defect.");
+    return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+});
+// 30. Branded vs Non-Branded
+server.tool("branded_vs_non_branded", "Split search performance into branded and non-branded traffic using Google's own query classification. Returns clicks, impressions, CTR, position and share for each side, change against the previous period, a daily trend, and the top queries and pages on each side. Only top-level properties with enough query volume are classified, and only from 2026-02-21; when eligible is false the data is unavailable, not zero." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX + guardrails_js_1.POSITION_CAVEAT, {
+    days: zod_1.z.number().default(28).describe("Number of days to analyse"),
+    row_limit: zod_1.z.number().default(25).describe("Maximum top queries and pages to return per side"),
+    filter_lists: filterListsSchema,
+    include_trend: zod_1.z.boolean().default(true).describe("Include the daily branded / non-branded trend"),
+    site_url: zod_1.z.string().optional().describe("Override the configured property (e.g. sc-domain:example.com or https://www.example.com/)"),
+    search_type: zod_1.z.enum(["web", "image", "video", "news", "discover", "googleNews"]).optional().describe("Search surface. Defaults to web. Multimodal search has no branded classification"),
+}, async ({ days, row_limit, filter_lists, include_trend, site_url, search_type }) => {
+    const results = await (0, branded_vs_non_branded_js_1.brandedVsNonBranded)(days, row_limit, filter_lists, include_trend, site_url, search_type);
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "branded_vs_non_branded", { days, row_limit, filter_lists, include_trend, site_url, search_type });
+    return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+    };
+});
+// 31. Multimodal Search Overview
+server.tool("multimodal_search_overview", "Performance in multimodal search: Google Lens, Circle to Search on Android, and image uploads in Google Search. Returns totals with change against the previous period, the size of multimodal relative to web search, top pages, countries, devices and a daily trend. Google provides no queries for this surface, so there is no keyword breakdown." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX + guardrails_js_1.POSITION_CAVEAT, {
+    days: zod_1.z.number().default(90).describe("Number of days to analyse (multimodal is low volume, default 90)"),
+    row_limit: zod_1.z.number().default(25).describe("Maximum pages and countries to return"),
+    filter_lists: filterListsSchema,
+    site_url: zod_1.z.string().optional().describe("Override the configured property (e.g. sc-domain:example.com or https://www.example.com/)"),
+}, async ({ days, row_limit, filter_lists, site_url }) => {
+    const results = await (0, multimodal_search_overview_js_1.multimodalSearchOverview)(days, row_limit, filter_lists, site_url);
+    const wrapped = (0, guardrails_js_1.withMeta)(results, "multimodal_search_overview", { days, row_limit, filter_lists, site_url });
     return {
         content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
     };

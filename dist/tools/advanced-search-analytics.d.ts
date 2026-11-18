@@ -1,3 +1,4 @@
+import { DimensionFilterList, SearchType } from "../analytics.js";
 interface Filter {
     dimension: string;
     operator: string;
@@ -19,7 +20,8 @@ interface AdvancedSearchResult {
     };
     filtersApplied: Filter[];
 }
-export declare function advancedSearchAnalytics(days?: number, dimensions?: string[], filters?: Filter[], rowLimit?: number, orderBy?: string, orderDirection?: string, siteUrl?: string, searchType?: "web" | "image" | "video" | "news" | "discover" | "googleNews"): Promise<AdvancedSearchResult & {
+export declare function advancedSearchAnalytics(days?: number, dimensions?: string[], filters?: Filter[], rowLimit?: number, orderBy?: string, orderDirection?: string, siteUrl?: string, searchType?: SearchType, filterLists?: DimensionFilterList[]): Promise<AdvancedSearchResult & {
     searchType: string;
+    filterListsApplied: DimensionFilterList[];
 }>;
 export {};

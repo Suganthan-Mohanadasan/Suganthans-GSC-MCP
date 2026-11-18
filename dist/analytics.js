@@ -1,9 +1,43 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.BRANDED_DATA_START = void 0;
+exports.buildFilterGroups = buildFilterGroups;
 exports.getDateRange = getDateRange;
 exports.getPriorDateRange = getPriorDateRange;
 exports.fetchAllRows = fetchAllRows;
 const auth_js_1 = require("./auth.js");
+// First date with branded / non-branded data in the API.
+exports.BRANDED_DATA_START = "2026-02-21";
+/**
+ * Builds the single AND filter group the API supports from single-value
+ * filters and multi-value filter lists. Country codes are lower-cased and
+ * device names upper-cased in filter lists, which is the form the API matches.
+ */
+function buildFilterGroups(filters = [], filterLists = []) {
+    if (filters.length === 0 && filterLists.length === 0)
+        return undefined;
+    return [
+        {
+            ...(filters.length > 0
+                ? {
+                    filters: filters.map((f) => ({
+                        dimension: f.dimension,
+                        operator: f.operator,
+                        expression: f.expression,
+                    })),
+                }
+                : {}),
+            ...(filterLists.length > 0
+                ? {
+                    filterLists: filterLists.map((l) => ({
+                        dimension: l.dimension,
+                        expressions: l.expressions.map((e) => l.dimension === "device" ? e.toUpperCase() : e.toLowerCase()),
+                    })),
+                }
+                : {}),
+        },
+    ];
+}
 function formatDate(date) {
     return date.toISOString().split("T")[0];
 }

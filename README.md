@@ -9,12 +9,12 @@
 [![MCP server](https://img.shields.io/badge/MCP-server-305686?style=flat-square&labelColor=24292f&logo=modelcontextprotocol&logoColor=white)](https://modelcontextprotocol.io/)
 [![Works with Claude Desktop and Claude Code](https://img.shields.io/badge/Claude-Desktop%20%2B%20Code-305686?style=flat-square&labelColor=24292f&logo=claude&logoColor=white)](#quick-start)
 [![Google Search Console API](https://img.shields.io/badge/Google%20Search%20Console-API-305686?style=flat-square&labelColor=24292f&logo=googlesearchconsole&logoColor=white)](https://developers.google.com/webmaster-tools)
-[![29 tools](https://img.shields.io/badge/tools-29-305686?style=flat-square&labelColor=24292f)](#all-29-tools)
+[![31 tools](https://img.shields.io/badge/tools-31-305686?style=flat-square&labelColor=24292f)](#all-31-tools)
 [![Privacy: local first](https://img.shields.io/badge/privacy-local%20first-305686?style=flat-square&labelColor=24292f&logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI%2BPHJlY3Qgd2lkdGg9IjE4IiBoZWlnaHQ9IjExIiB4PSIzIiB5PSIxMSIgcng9IjIiIHJ5PSIyIi8%2BPHBhdGggZD0iTTcgMTFWN2E1IDUgMCAwIDEgMTAgMHY0Ii8%2BPC9zdmc%2BCg%3D%3D)](#what-makes-this-different-from-other-google-search-console-mcp-servers)
 
 An MCP server for Google Search Console that lets you ask Claude questions about your search data and get real answers. Not raw API rows. Actual analysis.
 
-29 tools. OAuth or service account. Free and open source. Runs on your machine: your data goes straight from this computer to Google, and nothing passes through anyone else's servers.
+31 tools. OAuth or service account. Free and open source. Runs on your machine: your data goes straight from this computer to Google, and nothing passes through anyone else's servers.
 
 https://github.com/user-attachments/assets/ef131907-4461-4c6a-8080-770f8162dbf2
 
@@ -183,7 +183,7 @@ For multiple properties, add `GSC_SITE_URLS`:
 
 You can also point a single query at any property your credentials can see without touching the config: `advanced_search_analytics`, `genai_conversation_queries`, and all 7 image-search analysis tools take an optional `site_url` parameter. "Which pages get image impressions but no clicks on sc-domain:secondsite.com?" just works.
 
-## All 29 tools
+## All 31 tools
 
 ### Analysis
 
@@ -201,7 +201,9 @@ You can also point a single query at any property your credentials can see witho
 | `inspect_url` | Is this URL indexed? Last crawl date, canonical, robots/noindex issues |
 | `check_alerts` | Position drops, CTR collapses, click losses, disappeared pages. Severity-rated |
 | `content_recommendations` | Prioritised actions: pages to update, content to create, pages to consolidate |
-| `advanced_search_analytics` | Custom queries with flexible dimensions and filters |
+| `advanced_search_analytics` | Custom queries with flexible dimensions and filters, including `brandedClassification`, multi-country / multi-device `filter_lists`, and `search_type: webMultimodal` |
+| `branded_vs_non_branded` | Branded vs non-branded split from Google's own classification: totals, share, change vs the previous period, daily trend, top queries and pages per side |
+| `multimodal_search_overview` | Google Lens, Circle to Search and image-upload performance: totals, size relative to web, top pages, countries, devices, daily trend |
 | `generate_report` | Full markdown report saved to disk |
 | `multi_site_dashboard` | Health check across all properties in one command |
 
@@ -269,6 +271,8 @@ Step-by-step setup with screenshots, use cases, and examples:
 **[suganthan.com/blog/google-search-console-mcp-server/](https://suganthan.com/blog/google-search-console-mcp-server/)**
 
 ## Changelog
+
+**Unreleased** Support for the [Search Analytics API additions of 16 November 2026](https://developers.google.com/search/blog/2026/11/search-analytics-api-update). `branded_vs_non_branded` uses the new `brandedClassification` dimension to split performance into branded and non-branded traffic with Google's own classification, rather than a regex you maintain. `multimodal_search_overview` reads `type=webMultimodal` (Google Lens, Circle to Search on Android, image uploads in Search). `advanced_search_analytics` gains `filter_lists` for multi-country and multi-device filtering in one call (the API's `filterLists`), accepts `brandedClassification` and `searchAppearance` as dimensions and filters, and accepts `search_type: webMultimodal`. Limits that come from Google, verified against the live API: branded data starts on 2026-02-21 and exists only for top-level properties with enough volume (ineligible properties return no rows, reported as `eligible: false`); `brandedClassification` cannot be combined with a query filter; multimodal search cannot be grouped or filtered by query or by `brandedClassification`; filter lists accept only `country` and `device`, and a dimension cannot appear in both a filter and a filter list.
 
 **v2.5.1** Three fixes from the issue queue. The sitemaps tools now call `sc-domain:` properties as-is, which the Sitemaps API supports and always has; the old URL-prefix rewrite manufactured a 403, blamed the API for it, and on some accounts silently returned a stale URL-prefix property's sitemap list instead of the domain property's. The rewrite survives only as a fallback for accounts whose permission genuinely lives on a URL-prefix property. Credit to [pauljlange](https://github.com/pauljlange) for proving the premise wrong with raw API calls. Service-account mode now requests the same scope set as the OAuth flow, so `submit_url` and `submit_batch` work with service accounts and the `GSC_SCOPES=readonly` tier applies there too; the OAuth half of this shipped earlier via [tomschmidty12-sys](https://github.com/tomschmidty12-sys)'s PR, after [stuli1989](https://github.com/stuli1989) reported it and sent the first fix for both modes in [#3](https://github.com/Suganthan-Mohanadasan/Suganthans-GSC-MCP/pull/3). And the Google client libraries are bumped (googleapis 144 to 176, google-auth-library 10, gaxios 7) so token fetches use Node's native fetch; the old node-fetch path failed to decompress Google's gzip token responses on Node 22 and newer, which broke service accounts, most visibly on Windows. Credit to [wilotas](https://github.com/wilotas) for the full diagnosis and the verified fix. Also fixed: the one-click desktop bundle. Every previous `.mcpb` shipped without the googleapis package internals (the packer silently pruned them), so the extension could never start, and "Unable to connect to extension server" was this bug, not your config. The v2.5.1 bundle carries the complete production dependency tree and was runtime-tested against the live API before upload, which is why it is bigger. Credit to [VeloWulf](https://github.com/VeloWulf) for the report.
 
