@@ -1,4 +1,11 @@
-import { fetchAllRows, getDateRange, SearchAnalyticsRow } from "../analytics.js";
+import {
+  fetchAllRows,
+  getDateRange,
+  buildFilterGroups,
+  DimensionFilterList,
+  SearchAnalyticsRow,
+  SearchType,
+} from "../analytics.js";
 
 interface Filter {
   dimension: string;
@@ -28,20 +35,12 @@ export async function advancedSearchAnalytics(
   orderBy: string = "clicks",
   orderDirection: string = "descending",
   siteUrl?: string,
-  searchType?: "web" | "image" | "video" | "news" | "discover" | "googleNews"
-): Promise<AdvancedSearchResult & { searchType: string }> {
+  searchType?: SearchType,
+  filterLists: DimensionFilterList[] = []
+): Promise<AdvancedSearchResult & { searchType: string; filterListsApplied: DimensionFilterList[] }> {
   const { startDate, endDate } = getDateRange(days);
 
-  // Build dimension filter groups from user-provided filters
-  const dimensionFilterGroups = filters.length > 0
-    ? [{
-        filters: filters.map((f) => ({
-          dimension: f.dimension,
-          operator: f.operator,
-          expression: f.expression,
-        })),
-      }]
-    : undefined;
+  const dimensionFilterGroups = buildFilterGroups(filters, filterLists);
 
   const rows = await fetchAllRows(
     {
@@ -77,6 +76,7 @@ export async function advancedSearchAnalytics(
     dimensions,
     period: { startDate, endDate },
     filtersApplied: filters,
+    filterListsApplied: filterLists,
     searchType: searchType || "web",
   };
 }
